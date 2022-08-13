@@ -1,6 +1,5 @@
-print("\n"+__name__)
+a = 1
 
-s = True
 def change():
 	__univ__.t = False
 def view():

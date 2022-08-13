@@ -1,3 +1,3 @@
-__index__ = ["apple", "cashew"]
+__index__ = ["apple", "cashew", "pear"]
 
 s = True

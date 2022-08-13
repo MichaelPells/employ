@@ -116,8 +116,13 @@ class use:
 					else: __global__ = globals()
 
 				if "univ" in __params__:
-					__univ__ = __params__["univ"]
-				elif __isdir__: __univ__ = __self__.__classify__()
+					__univdict__ = __params__["univ"]
+				elif __isdir__: __univdict__ = {}
+
+				__univ__ = __self__.__classify__()
+				for __new__ in __univdict__: __univ__.__setattr__(__new__, __univdict__[__new__])
+				try: del __new__
+				except: pass
 				__self__.__setattr__("__classify__",None)
 				
 				if __source__ == "local": __script__ = __io__.read()
@@ -138,7 +143,7 @@ class use:
 					del __oldenv__, __newenv__, __req__
 				elif __isdir__:
 					for __new__ in __env__:
-						if __new__ not in __oldenv__: __univ__.__setattr__(__new__, __env__[__new__])
+						if __new__ not in __oldenv__: __univdict__.update({__new__: __env__[__new__]})
 						del __new__
 
 
@@ -151,8 +156,8 @@ class use:
 							if __item__.endswith(".py"): __item__ = __item__[0:__item__.find(".py")]
 							if "only" not in __params__ or __item__ in __params__["only"]:
 								try:
-									if __source__ == "local": __child__ = use(__item__, path=__dir__+__name__, level="private", univ=__univ__, family=__children__)
-									elif __source__ == "remote": __child__ = use(__item__, url=__join__(__url__+"/", __item__+".py"), level="private", univ=__univ__, family=__children__)
+									if __source__ == "local": __child__ = use(__item__, path=__dir__+__name__, level="private", univ=__univdict__, family=__children__)
+									elif __source__ == "remote": __child__ = use(__item__, url=__join__(__url__+"/", __item__+".py"), level="private", univ=__univdict__, family=__children__)
 
 									__modules__.update({__item__: __child__})
 									__children__.__setattr__(__item__, __child__)
@@ -170,8 +175,8 @@ class use:
 								self.item = item
 							def run(self):
 								try:
-									if __source__ == "local": __childdict__[self.item] = use(self.item, path=__dir__+__name__, level="private", univ=__univ__, family=__children__)
-									elif __source__ == "remote": __childdict__[self.item] = use(self.item, url=__join__(__url__+"/", self.item+".py"), level="private", univ=__univ__, family=__children__)
+									if __source__ == "local": __childdict__[self.item] = use(self.item, path=__dir__+__name__, level="private", univ=__univdict__, family=__children__)
+									elif __source__ == "remote": __childdict__[self.item] = use(self.item, url=__join__(__url__+"/", self.item+".py"), level="private", univ=__univdict__, family=__children__)
 								except: del __childdict__[self.item]
 						for __item__ in __items__:
 							if __item__.endswith(".py"): __item__ = __item__[0:__item__.find(".py")]

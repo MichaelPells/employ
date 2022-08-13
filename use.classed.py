@@ -10,6 +10,11 @@ class use:
 	modules = {}            
 
 	class __classify__: pass
+	class __classed__:
+					def __init__(self, new):
+						for attr in dir(new):
+							if not (attr.startswith("__") and attr.endswith("__")):
+								self.__setattr__(attr, new.__getattribute__(attr))
 	
 	def __init__(__self__, __name__="", **__params__):
 	
@@ -116,9 +121,10 @@ class use:
 					else: __global__ = globals()
 
 				if "univ" in __params__:
-					__univ__ = __params__["univ"]
+					__univ__ = __self__.__classed__(__params__["univ"])
 				elif __isdir__: __univ__ = __self__.__classify__()
 				__self__.__setattr__("__classify__",None)
+				__self__.__setattr__("__classed__",None)
 				
 				if __source__ == "local": __script__ = __io__.read()
 				elif __source__ == "remote": __script__ = __io__.content
