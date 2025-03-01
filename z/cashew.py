@@ -1,6 +1,6 @@
 print("\n"+__name__)
 
-s = True
+# s = True
 def view():
 	print("\n"+__name__)
-	print(__univ__.t)
+	print(__univ__.s)
