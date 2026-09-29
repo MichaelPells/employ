@@ -1,4 +1,7 @@
 class employ:
+	"""
+	...
+	"""
 	import sys as __sys__
 	import os as __os__
 	import threading as __thread__
@@ -9,14 +12,29 @@ class employ:
 
 	modules = {}            
 
-	class __classify__: pass
+	class __classify__:
+		"""
+		...
+		"""
+		pass
 	
 	def __init__(__self__, __name__="", **__params__):
+		"""
+		...
+		"""
 	
 		__self__.__ready__ = False
 		
 		class __sync__(__self__.__thread__.Thread):
+			"""
+			...
+			"""
+
 			def run(self, __self__=__self__, __name__=__name__, __params__=__params__):
+				"""
+				...
+				"""
+
 				del self
 				
 				if __name__.endswith(".py"): __name__ = __name__[0:__name__.find(".py")]
