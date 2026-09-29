@@ -50,6 +50,10 @@ class employ:
 					if "getoptions" in __params__: __getoptions__ = __params__["getoptions"]
 					else: __getoptions__ = {"allow_redirects": True, "timeout": 30}
 					def __fetch__(url, **options):
+						"""
+						...
+						"""
+
 						try:
 							io = __self__.__requests__.get(url, **options)
 							if io.status_code // 100 != 2:
@@ -58,6 +62,10 @@ class employ:
 						except AssertionError: raise AssertionError("No module found in remote repository")
 						except: raise AssertionError("Module could not be fetched")
 					def __isdir__(url, **options):
+						"""
+						...
+						"""
+
 						try:
 							io = __self__.__requests__.get(url, **options)
 							if io.status_code // 100 == 2: return True
@@ -183,6 +191,10 @@ class employ:
 							if __item__.endswith(".py"): __item__ = __item__[0:__item__.find(".py")]
 							__childdict__[__item__] = None
 						class __createchild__(__self__.__thread__.Thread):
+							"""
+							...
+							"""
+
 							def __init__(self, item):
 								__self__.__thread__.Thread.__init__(self)
 								self.item = item
