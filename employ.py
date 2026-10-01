@@ -1,6 +1,6 @@
 class employ:
 	"""
-	...
+	Make programmatic, dynamic, and robust import for Python module or library.
 	"""
 	import sys as __sys__
 	import os as __os__
@@ -14,25 +14,33 @@ class employ:
 
 	class __objectify__:
 		"""
-		...
+		Create an attributable container (that is, object).
 		"""
+
 		pass
 	
 	def __init__(__self__, __name__="", **__params__):
 		"""
-		...
+		Create an `employ` object.
+
+		__name__
+			Optional. Module, or file name of module.
+		
+		__params__
+			Optional. Kwargs for defining import behaviour, module information, and module resources.	
 		"""
-	
+
 		__self__.__ready__ = False
 		
 		class __sync__(__self__.__thread__.Thread):
 			"""
-			...
+			Subclass of `threading.Thread`. Allow both synchronous and asynchronous imports.
 			"""
 
 			def run(self, __self__=__self__, __name__=__name__, __params__=__params__):
 				"""
-				...
+				Override of the `threading.Thread`'s `run()` method. Executes either synchronous and asynchronous imports
+				depending on whether it is called directly, or through `threading.Thread`'s `start()` method.
 				"""
 
 				del self
@@ -51,7 +59,12 @@ class employ:
 					else: __getoptions__ = {"allow_redirects": True, "timeout": 30}
 					def __fetch__(url, **options):
 						"""
-						...
+						Downloads remote module or library. Returns an HTTP Response object.
+
+						url
+							URL of module.
+						options
+							Optional. Kwargs for `requests.get`'s optional parameters.
 						"""
 
 						try:
@@ -63,7 +76,8 @@ class employ:
 						except: raise AssertionError("Module could not be fetched")
 					def __isdir__(url, **options):
 						"""
-						...
+						Check if remote module is a package (that is, is a folder with `__init__.py`).
+						Basically checks if a remote resource is available. Returns `True` or `False`.
 						"""
 
 						try:
