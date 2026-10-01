@@ -12,7 +12,7 @@ class employ:
 
 	modules = {}            
 
-	class __classify__:
+	class __objectify__:
 		"""
 		...
 		"""
@@ -83,7 +83,7 @@ class employ:
 							__isdir__ = True
 							__items__ = []
 							__modules__ = {}
-							__children__ = __self__.__classify__()
+							__children__ = __self__.__objectify__()
 						
 							__filename__ = __name__+"/__init__.py"
 							__io__ = __fetch__(__file__, **__getoptions__)
@@ -112,7 +112,7 @@ class employ:
 									if "__init__.py" in __items__:
 										__items__.remove("__init__.py")
 										__modules__ = {}
-										__children__ = __self__.__classify__()
+										__children__ = __self__.__objectify__()
 									
 										__filename__ = __name__+"/__init__.py"
 										__io__ = open(__dir__+__filename__)
@@ -143,8 +143,8 @@ class employ:
 
 				if "univ" in __params__:
 					__univ__ = __params__["univ"]
-				elif __isdir__: __univ__ = __self__.__classify__()
-				__self__.__setattr__("__classify__",None)
+				elif __isdir__: __univ__ = __self__.__objectify__()
+				__self__.__setattr__("__objectify__",None)
 				
 				if __source__ == "local": __script__ = __io__.read()
 				elif __source__ == "remote": __script__ = __io__.content
@@ -246,7 +246,7 @@ class employ:
 						for __mod__ in __modules__: __global__[__mod__] = __modules__[__mod__]
 
 
-				if "level" not in __params__ or __params__["level"] != "private":       
+				if "level" not in __params__ or __params__["level"] != "private":
 					__self__.modules.update({__name__:__self__})
 					__self__.__sys__.modules.update({__name__:__self__})
 				
