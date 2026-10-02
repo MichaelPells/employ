@@ -76,7 +76,7 @@ class employ:
 						except: raise AssertionError("Module could not be fetched")
 					def __isdir__(url, **options):
 						"""
-						Check if remote module is a package (that is, is a folder with `__init__.py`).
+						Checks if remote module is a package (that is, a folder with `__init__.py`).
 						Basically checks if a remote resource is available. Returns `True` or `False`.
 						"""
 
@@ -211,7 +211,7 @@ class employ:
 
 							def __init__(self, item):
 								"""
-								Initialize child module creation routine.
+								Initializes child module creation routine.
 
 								item
 									Name of child module.
