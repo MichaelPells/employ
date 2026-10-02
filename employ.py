@@ -1,6 +1,6 @@
 class employ:
 	"""
-	Make programmatic, dynamic, and robust import for Python module or library.
+	Make programmatic, dynamic, and robust import for local or remote Python module or library.
 	"""
 	import sys as __sys__
 	import os as __os__
@@ -21,7 +21,7 @@ class employ:
 	
 	def __init__(__self__, __name__="", **__params__):
 		"""
-		Create an `employ` object.
+		Creates an `employ` object (that is, module).
 
 		__name__
 			Optional. Module, or file name of module.
@@ -39,7 +39,7 @@ class employ:
 
 			def run(self, __self__=__self__, __name__=__name__, __params__=__params__):
 				"""
-				Override of the `threading.Thread`'s `run()` method. Executes either synchronous and asynchronous imports
+				Overrides the `threading.Thread`'s `run()` method. Executes either synchronous and asynchronous imports
 				depending on whether it is called directly, or through `threading.Thread`'s `start()` method.
 				"""
 
@@ -206,13 +206,24 @@ class employ:
 							__childdict__[__item__] = None
 						class __createchild__(__self__.__thread__.Thread):
 							"""
-							...
+							Subclass of `threading.Thread`. Allow asynchronous import of child modules.
 							"""
 
 							def __init__(self, item):
+								"""
+								Initialize child module creation routine.
+
+								item
+									Name of child module.
+								"""
+
 								__self__.__thread__.Thread.__init__(self)
 								self.item = item
 							def run(self):
+								"""
+								Overrides the `threading.Thread`'s `run()` method. Imports child module, and stores in `__childdict__`.
+								"""
+
 								try:
 									if __source__ == "local": __childdict__[self.item] = employ(self.item, path=__dir__+__name__, level="private", univ=__univ__, family=__children__)
 									elif __source__ == "remote": __childdict__[self.item] = employ(self.item, url=__join__(__url__+"/", self.item+".py"), level="private", univ=__univ__, family=__children__)
