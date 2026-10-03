@@ -78,6 +78,11 @@ class employ:
 						"""
 						Checks if remote module is a package (that is, a folder with `__init__.py`).
 						Basically checks if a remote resource is available. Returns `True` or `False`.
+
+						url
+							URL of module.
+						options
+							Optional. Kwargs for `requests.get`'s optional parameters.
 						"""
 
 						try:
