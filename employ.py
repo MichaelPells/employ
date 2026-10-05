@@ -13,10 +13,7 @@ class employ:
 	modules = {}            
 
 	class __objectify__:
-		"""
-		Create an attributable container (that is, object).
-		"""
-
+		"""Create an attributable container (that is, object)."""
 		pass
 	
 	def __init__(__self__, __name__="", **__params__):
@@ -33,9 +30,7 @@ class employ:
 		__self__.__ready__ = False
 		
 		class __sync__(__self__.__thread__.Thread):
-			"""
-			Subclass of `threading.Thread`. Allow both synchronous and asynchronous imports.
-			"""
+			"""Subclass of `threading.Thread`. Allow both synchronous and asynchronous imports."""
 
 			def run(self, __self__=__self__, __name__=__name__, __params__=__params__):
 				"""
@@ -48,6 +43,7 @@ class employ:
 				if __name__.endswith(".py"): __name__ = __name__[0:__name__.find(".py")]
 
 				if "url" in __params__ and (__params__["url"].startswith("http://") or __params__["url"].startswith("https://")) and "path" not in __params__:
+				## For remote modules:
 					__source__ = "remote"
 					__url__ = __params__["url"]
 					__join__ = __self__.__parser__.urljoin
@@ -92,6 +88,7 @@ class employ:
 						
 					try:
 						if not __isdir__(__file__, **__getoptions__):
+						## For remote modules that are not packages (that is, a single `.py` file):
 							__isdir__ = False
 							__io__ = __fetch__(__url__, **__getoptions__)
 
@@ -99,6 +96,7 @@ class employ:
 							__io__.name = __url__
 							
 						else:
+						## For remote modules that are packages (that is, a folder with `__init__.py`):
 							__isdir__ = True
 							__items__ = []
 							__modules__ = {}
@@ -110,14 +108,18 @@ class employ:
 							__io__.name = __file__
 						del __fetch__
 					except Exception as e:
+					## For remote modules that are not found:
 						raise ModuleNotFoundError(e)
 				else:
+				# For local modules:
 					__source__ = "local"
 					if "path" in __params__: __self__.__PATH__ = [__params__["path"]]
 					
 					for __path__ in __self__.__PATH__:
+					## For each path in the module search paths:
 						try:
 							if not __path__.endswith(".zip"):
+							## For regular local modules (that are NOT in a zip file):
 								if __path__ != "" and not __path__.endswith("/"): __dir__ = __path__+"/"
 								else: __dir__ = __path__
 								
@@ -139,51 +141,67 @@ class employ:
 										__io__ = open(__dir__+__filename__)
 									else: raise Exception
 							else:
+							## For local modules that are in a zip file:
+								# __isdir__ = False -- Revisit this LATER. For now, assume that all modules in zip files are not packages (that is, a single `.py` file).
 								__io__ = __self__.__zip__(__path__).open(__filename__)
 
 							break
 						except:
+						# When module is not found in the current path, continue to the next path.
+						# If no more paths are available, raise `ModuleNotFoundError`.
 							if __self__.__PATH__.index(__path__) < len(__self__.__PATH__)-1: continue
 							else: raise ModuleNotFoundError("No module named '"+__name__+"'")
-				
+
+				## Clear `employ` object attributes to avoid namespace pollution and potential conflicts with imported module's attributes.
+				# LATER: Check if these attributes are garbage collected.
 				__self__.__setattr__("__os__",None)
 				__self__.__setattr__("__zip__",None)
 				__self__.__setattr__("__PATH__",[])
 				__self__.__setattr__("__requests__",None)
 				__self__.__setattr__("__parser__",None)
-				
+
+				## Allow for custom module name via the `name` parameter.
+				## Useful for avoiding naming conflicts when importing modules with the same file name.
 				if "name" in __params__:
 					__name__ = __params__["name"]
 
+				## Allow shared access to variables across sister modules (that is, modules in the same package) via  the `__family__` object. 
 				if "family" in __params__:
 					__family__ = __params__["family"]
 
+				## Allow access to existing environment via the `res` parameter, or via the default `globals()` object,
+				## if module is imported as a public module:
 				if "level" not in __params__ or __params__["level"] != "private":
 					if "res" in __params__: __global__ = __params__["res"]
 					else: __global__ = globals()
 
+				## Allow child modules to access variables from the parent module's environment via the `__univ__` object.
 				if "univ" in __params__:
 					__univ__ = __params__["univ"]
 				elif __isdir__: __univ__ = __self__.__objectify__()
 				__self__.__setattr__("__objectify__",None)
-				
+
+				## Read the module's script.
 				if __source__ == "local": __script__ = __io__.read()
 				elif __source__ == "remote": __script__ = __io__.content
 				if type(__script__) == bytes: __script__ = __script__.decode()
 				try: __io__.close()
 				except: pass
-				
+
+				## Create a new environment for the module's script to execute in, and execute the script in that environment.
 				__env__ = locals()
 				if not __isdir__ and "only" in __params__: __oldenv__ = dict(__env__) # Snapshots the current environment
 				elif __isdir__: __oldenv__ = dict(__env__) # Snapshots the current environment
 				__env__.pop("__self__")
 				exec(__script__, __env__)
 				if not __isdir__ and "only" in __params__:
+				## Perform selective addition of variables from the new environment to the old environment, based on the `only` parameter.
 					__newenv__ = __env__ # Snapshots the new environment
 					__env__ = __oldenv__ # Restores the old environment
 					for __req__ in __params__["only"]: __env__.update({__req__: __newenv__[__req__]}) # Adds desired variables to old from new environment
 					del __oldenv__, __newenv__, __req__
 				elif __isdir__:
+				## Register new variables from the new environment to the `__univ__` object.
 					for __new__ in __env__:
 						if __new__ not in __oldenv__: __univ__.__setattr__(__new__, __env__[__new__])
 						del __new__
@@ -212,9 +230,7 @@ class employ:
 							if __item__.endswith(".py"): __item__ = __item__[0:__item__.find(".py")]
 							__childdict__[__item__] = None
 						class __createchild__(__self__.__thread__.Thread):
-							"""
-							Subclass of `threading.Thread`. Allow asynchronous import of child modules.
-							"""
+							"""Subclass of `threading.Thread`. Allow asynchronous import of child modules."""
 
 							def __init__(self, item):
 								"""
@@ -227,9 +243,7 @@ class employ:
 								__self__.__thread__.Thread.__init__(self)
 								self.item = item
 							def run(self):
-								"""
-								Overrides the `threading.Thread`'s `run()` method. Imports child module, and stores in `__childdict__`.
-								"""
+								"""Overrides the `threading.Thread`'s `run()` method. Imports child module, and stores in `__childdict__`."""
 
 								try:
 									if __source__ == "local": __childdict__[self.item] = employ(self.item, path=__dir__+__name__, level="private", univ=__univ__, family=__children__)
