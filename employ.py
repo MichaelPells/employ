@@ -44,12 +44,9 @@ class employ:
 				"""
 
 				del self
-				
+
 				if __name__.endswith(".py"): __name__ = __name__[0:__name__.find(".py")]
-						
-				if "." not in __name__: __filename__ = __name__+".py"
-				else: __filename__ = __name__
-				
+
 				if "url" in __params__ and (__params__["url"].startswith("http://") or __params__["url"].startswith("https://")) and "path" not in __params__:
 					__source__ = "remote"
 					__url__ = __params__["url"]
@@ -57,6 +54,7 @@ class employ:
 					__file__ = __join__(__url__+"/", "__init__.py")
 					if "getoptions" in __params__: __getoptions__ = __params__["getoptions"]
 					else: __getoptions__ = {"allow_redirects": True, "timeout": 30}
+
 					def __fetch__(url, **options):
 						"""
 						Downloads remote module or library. Returns an HTTP Response object.
@@ -74,6 +72,7 @@ class employ:
 							return io
 						except AssertionError: raise AssertionError("No module found in remote repository")
 						except: raise AssertionError("Module could not be fetched")
+
 					def __isdir__(url, **options):
 						"""
 						Checks if remote module is a package (that is, a folder with `__init__.py`).
@@ -96,6 +95,7 @@ class employ:
 							__isdir__ = False
 							__io__ = __fetch__(__url__, **__getoptions__)
 
+							__filename__ = __name__+".py"
 							__io__.name = __url__
 							
 						else:
@@ -123,6 +123,8 @@ class employ:
 								
 								if not __self__.__os__.path.isdir(__dir__+__name__):
 									__isdir__ = False
+
+									__filename__ = __name__+".py"
 									__io__ = open(__dir__+__filename__)
 									
 								else:
