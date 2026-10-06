@@ -1,6 +1,6 @@
 from employ import *
 
-cas = employ("z")
+cas = employ("z", on="main")
 cas.__univ__.t = False
 # cas.apple.change()
 cas.apple.view()

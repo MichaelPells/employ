@@ -1,37 +1,6 @@
 class employ:
 	"""
 	Make programmatic, dynamic, and robust import for local or remote Python module or library.
-	
-	__name__
-		Optional. Module, or file name of module.
-
-	__path__
-		Optional. Path to module, or path to folder containing module.
-
-	__url__
-		Optional. URL to module, or URL to folder containing module.
-
-	__level__
-		Optional. `"public"` | `"private"` (Default is `"public"`) Level of module. If "private", module is not registered to `sys.modules` and is not accessible outside of
-	
-	__on__
-		Optional. `"sub"` | `"main"` (Default is `"sub"`) If "sub", module is imported as a submodule (similar to `import module`). If "main", module is imported as a main module (similar to `from module import *`).
-	
-	__only__
-		Optional. List of module attributes and methods to import. If not specified, all module attributes	and methods are imported. If specified, only the listed attributes and methods are imported.
-	
-	__shared__
-		Optional. `"time"` | `"memory"` (Default is `"time"`) If "time", child modules are imported synchronously. If "memory", child modules are imported asynchronously. This parameter is only applicable to packages.
-	
-	__family__
-		Optional. Object to share variables across sister modules (that is, modules in the same package). This parameter is only applicable to packages.
-	
-	__univ__
-		Optional. Object to share variables across parent and child modules. This parameter is only applicable to packages.
-
-	__res__
-		Optional. Object to share variables across modules. If not specified, `globals()` is used.
-
 	"""
 	import sys as __eMPloY_sys__
 	import os as __eMPloY_os__
@@ -48,7 +17,47 @@ class employ:
 		pass
 	
 	def __init__(__self__, __name__="", **__params__):
-		"""Creates an `employ` object (that is, module)."""
+		"""
+		Creates an `employ` object (that is, module).
+
+		name
+			Optional. Module, or file name of module.
+		
+		path
+			Optional. Path to local module (or package).
+		
+		url
+			Optional. URL to remote module (or package).
+
+		getoptions
+			Optional. Kwargs for `requests.get`'s optional parameters. Only applicable to remote modules.
+		
+		level = "public" | "private"
+			Optional. Default is `"public"`. Level of module.
+			`"public"`: module has access to environment (as controlled by `res` parameter), and is registered to `sys.modules` and `employ.modules`.
+			`"private"`: module is not visible, and has no access, to the environment. Useful for importing child modules or dependencies of a module that would not be exposed globally.
+		
+		on = "sub" | "main"
+			Optional. Default is `"sub"`.
+			`"sub"`: module is imported as a submodule (similar to `import module`). All module's attributes and methods are registered to the `employ` object.
+			`"main"`: module is imported as a main module (similar to `from module import *`). All, except for the module's special attributes and methods, are registered to the global namespace.
+
+		only
+			Optional. List of module attributes and methods to import. If not specified, all module attributes	and methods are imported. If specified, only the listed attributes and methods are imported.
+		
+		shared
+			Optional. `"time"` | `"memory"` (Default is `"time"`) If "time", child modules are imported synchronously. If "memory", child modules are imported asynchronously. This parameter is only applicable to packages.
+		
+		family
+			Optional. Object to share variables across sister modules (that is, modules in the same package). This parameter is only applicable to packages.
+		
+		univ
+			Optional. Object to share variables across parent and child modules. This parameter is only applicable to packages.
+		
+		res
+			Optional. Object to share variables across modules. If not specified, `globals()` is used.
+		
+		"""
 
 		__self__.__ready__ = False
 		
