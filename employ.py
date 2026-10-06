@@ -39,24 +39,27 @@ class employ:
 		
 		on = "sub" | "main"
 			Optional. Default is `"sub"`.
-			`"sub"`: module is imported as a submodule (similar to `import module`). All module's attributes and methods are registered to the `employ` object.
-			`"main"`: module is imported as a main module (similar to `from module import *`). All, except for the module's special attributes and methods, are registered to the global namespace.
+			`"sub"`: module is imported as a submodule (similar to `import module`). All attributes and methods are registered to the `employ` object.
+			`"main"`: module is imported as a main module (similar to `from module import *`). All, except special attributes and methods, are registered to the global namespace.
 
 		only
-			Optional. List of module attributes and methods to import. If not specified, all module attributes	and methods are imported. If specified, only the listed attributes and methods are imported.
+			Optional. List of attributes and methods to import. If not specified, all attributes and methods are imported.
 		
-		shared
-			Optional. `"time"` | `"memory"` (Default is `"time"`) If "time", child modules are imported synchronously. If "memory", child modules are imported asynchronously. This parameter is only applicable to packages.
+		shared = "time" | "memory"
+			Optional. Default is `"time"`. Mode of execution for child imports. Only applicable to packages.
+			`"time"`: Child modules are imported synchronously.
+			`"memory"`: Child modules are imported asynchronously. Useful for large packages, or packages with blocking, non-terminating child modules (for instance, a child module that runs a server).
 		
 		family
-			Optional. Object to share variables across sister modules (that is, modules in the same package). This parameter is only applicable to packages.
+			Optional. Common object to share resources across, or allow communication between, sister modules (for instance, modules in the same package). Much useful when paired with `shared="memory"` parameter, where communication is required between non-terminating sister modules (for instance, a client-server application).
 		
 		univ
-			Optional. Object to share variables across parent and child modules. This parameter is only applicable to packages.
+			Optional. Simulated universal environment (an object) to share variables across parent and child modules.
 		
 		res
-			Optional. Object to share variables across modules. If not specified, `globals()` is used.
-		
+			Optional. Connection between module and existing environment (for instance, `globals()`), or a shared resource (for instance, a dictionary) between module and environment. If not specified, `globals()` is used.
+			Only applicable to public modules (that is, modules with `level="public"` parameter).
+
 		"""
 
 		__self__.__ready__ = False
@@ -197,12 +200,13 @@ class employ:
 				if "name" in __params__:
 					__name__ = __params__["name"]
 
-				# Allow shared access to variables across sister modules (that is, modules in the same package) via  the `__family__` object. 
+				# Allow shared access to variables across sister modules (for instance, modules in the same package) via  the `__family__` object. 
 				if "family" in __params__:
 					__family__ = __params__["family"]
 
 				# Allow access to existing environment via the `res` parameter, or via the default `globals()` object,
 				# if module is imported as a public module:
+				# LATER: Should this be done for private modules too? For now, no. Private modules are not visible to the environment, and should not have access to it.
 				if "level" not in __params__ or __params__["level"] != "private":
 					if "res" in __params__: __global__ = __params__["res"]
 					else: __global__ = globals()
