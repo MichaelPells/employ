@@ -31,35 +31,40 @@ class employ:
 
 		getoptions
 			Optional. Kwargs for `requests.get`'s optional parameters. Only applicable to remote modules.
-		
-		level = "public" | "private"
-			Optional. Default is `"public"`. Level of module.
-			`"public"`: module has access to environment (as controlled by `res` parameter), and is registered to `sys.modules` and `employ.modules`.
-			`"private"`: module is not visible, and has no access, to the environment. Useful for importing child modules or dependencies of a module that would not be exposed globally.
-		
+
 		on = "sub" | "main"
-			Optional. Default is `"sub"`.
+			Optional. Scope of module. Default is `"sub"`.
 			`"sub"`: module is imported as a submodule (similar to `import module`). All attributes and methods are registered to the `employ` object.
 			`"main"`: module is imported as a main module (similar to `from module import *`). All, except special attributes and methods, are registered to the global namespace.
 
-		only
-			Optional. List of attributes and methods to import. If not specified, all attributes and methods are imported.
-		
-		shared = "time" | "memory"
-			Optional. Default is `"time"`. Mode of execution for child imports. Only applicable to packages.
-			`"time"`: Child modules are imported synchronously.
-			`"memory"`: Child modules are imported asynchronously. Useful for large packages, or packages with blocking, non-terminating child modules (for instance, a child module that runs a server).
-		
-		family
-			Optional. Common object to share resources across, or allow communication between, sister modules (for instance, modules in the same package). Much useful when paired with `shared="memory"` parameter, where communication is required between non-terminating sister modules (for instance, a client-server application).
-		
-		univ
-			Optional. Simulated universal environment (an object) to share variables across parent and child modules.
-		
+		level = "public" | "private"
+			Optional. Level of module. Default is `"public"`.
+			`"public"`: module has access to environment (as controlled by `res` parameter), and is registered to `sys.modules` and `employ.modules`.
+			`"private"`: module is not visible, and has no access, to the environment. Useful for importing child modules or dependencies of a module that would not be exposed globally.
+
 		res
 			Optional. Connection between module and existing environment (for instance, `globals()`), or a shared resource (for instance, a dictionary) between module and environment. If not specified, `globals()` is used.
 			Only applicable to public modules (that is, modules with `level="public"` parameter).
 
+		sync = True | False
+			Optional. Boolean indicating mode of execution for module import. Default is `True`.
+			`True`: Import module synchronously, blocking the main thread until the module is fully imported.
+			`False`: Import module asynchronously (in a separate thread), allowing the main thread to continue executing while the module is being imported. Useful for large modules, or modules with blocking, non-terminating code (for instance, a module that runs a server).
+		
+		only
+			Optional. List of attributes and methods to import. If not specified, all attributes and methods are imported.
+		
+		shared = "time" | "memory"
+			Optional. Mode of execution for child imports. Default is `"time"`. Only applicable to packages.
+			`"time"`: Child modules are imported synchronously.
+			`"memory"`: Child modules are imported asynchronously (in separate threads). Useful for large packages, or packages with blocking, non-terminating child modules (for instance, a child module that runs a server).
+
+		univ
+			Optional. Simulated universal environment (an object) to share variables across parent and child modules.
+		
+		family
+			Optional. Common object to share resources across, or allow communication between, sister modules (for instance, modules in the same package). Much useful when paired with `shared="memory"` parameter, where communication is required between non-terminating sister modules (for instance, a client-server application).
+		
 		"""
 
 		__self__.__ready__ = False

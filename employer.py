@@ -1,6 +1,7 @@
 from employ import *
 
-cas = employ("z", shared="memory")
+cas = employ("z", sync=False)
+while cas.__ready__ != True: pass
 cas.__univ__.t = False
 # cas.apple.change()
 cas.apple.view()
