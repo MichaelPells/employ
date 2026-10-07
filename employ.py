@@ -371,5 +371,6 @@ class employ:
 
 
 		# Start the import process, either synchronously or asynchronously, based on the `sync` parameter.
-		if "sync" in __params__ and __params__["sync"] == False: __sync__().start()
-		else: __sync__().run()
+		__self__.__thread__ = __sync__()
+		if "sync" in __params__ and __params__["sync"] == False: __self__.__thread__.start()
+		else: __self__.__thread__.run()
