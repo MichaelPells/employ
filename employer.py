@@ -1,6 +1,7 @@
 from employ import *
 
 cas = employ("z", sync=False)
+cas.helloworld()
 cas.__thread__.join()
 cas.__univ__.t = False
 # cas.apple.change()

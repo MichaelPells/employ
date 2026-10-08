@@ -2,16 +2,34 @@ class employ:
 	"""
 	Make programmatic, dynamic, and robust import for local or remote Python module or library.
 	"""
-	import sys as __eMPloY_sys__
-	import os as __eMPloY_os__
-	import threading as __eMPloY_thread__
-	import requests as __eMPloY_requests__
-	import urllib.parse as __eMPloY_parser__
-	from zipfile import ZipFile as __eMPloY_zip__
-	__eMPloY_PATH__ = __eMPloY_sys__.path
 
-	modules = {}            
+	class __dependencies__:
+		def __init__(self):
+			import sys
+			self.sys = sys
 
+			import os
+			self.os = os
+
+			import threading
+			self.threading = threading
+
+			import requests
+			self.requests = requests
+
+			import urllib.parse
+			self.parser = urllib.parse
+
+			from zipfile import ZipFile
+			self.zip = ZipFile
+
+			self.PATH = sys.path
+
+	__deps__ = __dependencies__()
+
+	modules = {}
+
+	@staticmethod
 	class __objectify__:
 		"""Create an attributable container (that is, object)."""
 		pass
@@ -69,7 +87,7 @@ class employ:
 
 		__self__.__ready__ = False
 		
-		class __sync__(__self__.__eMPloY_thread__.Thread):
+		class __sync__(employ.__deps__.threading.Thread):
 			"""Subclass of `threading.Thread`. Allow both synchronous and asynchronous imports."""
 
 			def run(self, __self__=__self__, __name__=__name__, __params__=__params__):
@@ -86,7 +104,7 @@ class employ:
 				# For remote modules:
 					__source__ = "remote"
 					__url__ = __params__["url"]
-					__join__ = __self__.__eMPloY_parser__.urljoin
+					__join__ = employ.__deps__.parser.urljoin
 					__file__ = __join__(__url__+"/", "__init__.py")
 					if "getoptions" in __params__: __getoptions__ = __params__["getoptions"]
 					else: __getoptions__ = {"allow_redirects": True, "timeout": 30}
@@ -102,7 +120,7 @@ class employ:
 						"""
 
 						try:
-							io = __self__.__eMPloY_requests__.get(url, **options)
+							io = employ.__deps__.requests.get(url, **options)
 							if io.status_code // 100 != 2:
 								raise AssertionError
 							return io
@@ -121,7 +139,7 @@ class employ:
 						"""
 
 						try:
-							io = __self__.__eMPloY_requests__.get(url, **options)
+							io = employ.__deps__.requests.get(url, **options)
 							if io.status_code // 100 == 2: return True
 							else: return False
 						except: raise AssertionError("Module could not be fetched")
@@ -153,9 +171,9 @@ class employ:
 				else:
 				# For local modules:
 					__source__ = "local"
-					if "path" in __params__: __self__.__eMPloY_PATH__ = [__params__["path"]]
+					if "path" in __params__: employ.__deps__.PATH = [__params__["path"]]
 					
-					for __path__ in __self__.__eMPloY_PATH__:
+					for __path__ in employ.__deps__.PATH:
 					# For each path in the module search paths:
 						try:
 							if not __path__.endswith(".zip"):
@@ -163,7 +181,7 @@ class employ:
 								if __path__ != "" and not __path__.endswith("/"): __dir__ = __path__+"/"
 								else: __dir__ = __path__
 								
-								if not __self__.__eMPloY_os__.path.isdir(__dir__+__name__):
+								if not employ.__deps__.os.path.isdir(__dir__+__name__):
 									__isdir__ = False
 
 									__filename__ = __name__+".py"
@@ -171,7 +189,7 @@ class employ:
 									
 								else:
 									__isdir__ = True
-									__items__ = __self__.__eMPloY_os__.listdir(__dir__+__name__)
+									__items__ = employ.__deps__.os.listdir(__dir__+__name__)
 									if "__init__.py" in __items__:
 										__items__.remove("__init__.py")
 										__modules__ = {}
@@ -183,22 +201,14 @@ class employ:
 							else:
 							# For local modules that are in a zip file:
 								# __isdir__ = False -- Revisit this LATER. For now, assume that all modules in zip files are not packages (that is, a single `.py` file).
-								__io__ = __self__.__eMPloY_zip__(__path__).open(__filename__)
+								__io__ = employ.__deps__.zip(__path__).open(__filename__)
 
 							break
 						except:
 						# When module is not found in the current path, continue to the next path.
 						# If no more paths are available, raise `ModuleNotFoundError`.
-							if __self__.__eMPloY_PATH__.index(__path__) < len(__self__.__eMPloY_PATH__)-1: continue
+							if employ.__deps__.PATH.index(__path__) < len(employ.__deps__.PATH)-1: continue
 							else: raise ModuleNotFoundError("No module named '"+__name__+"'")
-
-				# Clear `employ` object attributes to avoid namespace pollution and potential conflicts with imported module's attributes.
-				# LATER: Check if these attributes are garbage collected.
-				__self__.__setattr__("__eMPloY_os__",None)
-				__self__.__setattr__("__eMPloY_zip__",None)
-				__self__.__setattr__("__eMPloY_PATH__",[])
-				__self__.__setattr__("__eMPloY_requests__",None)
-				__self__.__setattr__("__eMPloY_parser__",None)
 
 				# Allow for custom module name via the `name` parameter.
 				# Useful for avoiding naming conflicts when importing modules with the same file name.
@@ -279,7 +289,7 @@ class employ:
 							if __item__.endswith(".py"): __item__ = __item__[0:__item__.find(".py")]
 							__childdict__[__item__] = None
 
-						class __createchild__(__self__.__eMPloY_thread__.Thread):
+						class __createchild__(employ.__deps__.threading.Thread):
 							"""Subclass of `threading.Thread`. Allow asynchronous import of child modules."""
 
 							def __init__(self, item):
@@ -290,7 +300,7 @@ class employ:
 									Name of child module.
 								"""
 
-								__self__.__eMPloY_thread__.Thread.__init__(self)
+								employ.__deps__.threading.Thread.__init__(self)
 								self.item = item
 							def run(self):
 								"""Overrides the `threading.Thread`'s `run()` method. Imports child module, and stores in `__childdict__`."""
@@ -357,11 +367,10 @@ class employ:
 				# if module is imported as a public module.
 				if "level" not in __params__ or __params__["level"] != "private":
 					__self__.modules.update({__name__:__self__})
-					__self__.__eMPloY_sys__.modules.update({__name__:__self__})
+					employ.__deps__.sys.modules.update({__name__:__self__})
 
 				# Clear `employ` object attributes to avoid namespace pollution and potential conflicts with imported module's attributes.
 				__self__.__setattr__("modules",{})
-				__self__.__setattr__("__eMPloY_sys__",None)
 
 				# Register the `employ` object to the global namespace, if `name` parameter is specified.
 				if "name" in __params__:
