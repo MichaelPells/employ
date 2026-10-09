@@ -1,14 +1,44 @@
 from employ import *
+# import zipfile
 
-cas = employ("z", sync=False)
-cas.helloworld()
-cas.__thread__.join()
-cas.__univ__.t = False
-# cas.apple.change()
-cas.apple.view()
-cas.cashew.view()
-cas.pear.seed.view()
-print(cas.__univ__.t)
+
+# zip = zipfile.ZipFile("C:/Program Files/Python311/Python311.zip")
+
+# print(zip.getinfo("z/").is_dir())
+# for name in zip.namelist():
+#     path = name.split("/")
+
+#     if path[0] == "z":
+#         if len(path) == 2 and path[1] != "":
+#             print(path[1])
+#         elif len(path) == 3 and path[2] == "":
+#             print(path[1])
+
+# files = [
+#     name
+#     for name in zip.namelist()
+#     if name.startswith("z/") and name.count("/") == "z/".count("/")
+#     ]
+# print(files)
+# if not employ.__deps__.zippath(__zip__).is_dir(__name__):
+#     __isdir__ = False
+
+#     __filename__ = __name__+".py"
+#     __io__ = __zip__.open(__filename__)
+# file = zip("cashew.zip").open("cashew.py")
+# print(file.read().decode())
+
+cas = employ("z")
+print(cas.__isdir__)
+print(cas.s)
+# cas.helloworld()
+# cas.__thread__.join()
+# cas.__univ__.t = False
+# # cas.apple.change()
+# cas.apple.view()
+# cas.cashew.view()
+# cas.pear.seed.view()
+# print(cas.__univ__.t)
 # print(cas.modules)
 
 ##dic = {}

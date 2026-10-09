@@ -1,3 +1,4 @@
+from . import apple
 __index__ = ["apple", "cashew", "pear"]
 
 s = True

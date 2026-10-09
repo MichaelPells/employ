@@ -20,8 +20,9 @@ class employ:
 			import urllib.parse
 			self.parser = urllib.parse
 
-			from zipfile import ZipFile
+			from zipfile import ZipFile, Path
 			self.zip = ZipFile
+			self.zippath = Path
 
 			self.PATH = sys.path
 
@@ -171,12 +172,15 @@ class employ:
 				else:
 				# For local modules:
 					__source__ = "local"
-					if "path" in __params__: employ.__deps__.PATH = [__params__["path"]]
+					if "path" in __params__:
+						employ.__deps__.PATH = [__params__["path"]]
+					elif "zip" in __params__:
+						employ.__deps__.PATH = [None]
 					
 					for __path__ in employ.__deps__.PATH:
 					# For each path in the module search paths:
 						try:
-							if not __path__.endswith(".zip"):
+							if __path__ and not __path__.endswith(".zip"):
 							# For regular local modules (that are NOT in a zip file):
 								if __path__ != "" and not __path__.endswith("/"): __dir__ = __path__+"/"
 								else: __dir__ = __path__
@@ -201,7 +205,45 @@ class employ:
 							else:
 							# For local modules that are in a zip file:
 								# __isdir__ = False -- Revisit this LATER. For now, assume that all modules in zip files are not packages (that is, a single `.py` file).
-								__io__ = employ.__deps__.zip(__path__).open(__filename__)
+								if not "dir" in __params__:
+									__dir__ = __name__
+								else:
+									__dir__ = __params__["dir"] + "/" + __name__
+
+								if not "zip" in __params__:
+									__zip__ = employ.__deps__.zip(__path__)
+								else:
+									__zip__ = __params__["zip"]
+								
+								if __dir__+"/__init__.py" not in __zip__.namelist():
+									__isdir__ = False
+									__filename__ = __dir__+".py"
+									__io__ = __zip__.open(__filename__)
+
+								else:
+									__isdir__ = True
+
+									__items__ = []
+									for __item__ in __zip__.namelist():
+										path = __item__.split("/")
+										depth = len(__dir__.split("/"))
+
+										if "/".join(path[:depth]) == __dir__:
+											pathlen = len(path)
+											if pathlen == depth+1 and path[depth] != "":
+												__items__.append(path[depth])
+											elif pathlen == depth+2 and path[depth+1] == "":
+												__items__.append(path[depth])
+									print(__dir__, __items__)
+
+									if "__init__.py" in __items__:
+										__items__.remove("__init__.py")
+										__modules__ = {}
+										__children__ = __self__.__objectify__()
+
+										__filename__ = __dir__+"/__init__.py"
+										__io__ = __zip__.open(__filename__)
+									else: raise Exception
 
 							break
 						except:
@@ -274,8 +316,13 @@ class employ:
 							# If the child module is specified in the `only` parameter, or the `only` parameter is not specified:
 								# Quietly import child module, and register in `__modules__` dictionary and `__children__` object.
 								try:
-									if __source__ == "local": __child__ = employ(__item__, path=__dir__+__name__, level="private", univ=__univ__, family=__children__)
-									elif __source__ == "remote": __child__ = employ(__item__, url=__join__(__url__+"/", __item__+".py"), level="private", univ=__univ__, family=__children__)
+									if __source__ == "local":
+										if not "__zip__" in locals():
+											__child__ = employ(__item__, path=__dir__+__name__, level="private", univ=__univ__, family=__children__)
+										else:
+											__child__ = employ(__item__, level="private", univ=__univ__, family=__children__, zip=__zip__, dir=__dir__)
+									elif __source__ == "remote":
+										__child__ = employ(__item__, url=__join__(__url__+"/", __item__+".py"), level="private", univ=__univ__, family=__children__)
 
 									__modules__.update({__item__: __child__})
 									__children__.__setattr__(__item__, __child__)
