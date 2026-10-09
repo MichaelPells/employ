@@ -174,7 +174,7 @@ class employ:
 					__source__ = "local"
 					if "path" in __params__:
 						employ.__deps__.PATH = [__params__["path"]]
-					elif "zip" in __params__:
+					elif "zip" in __params__: # LATER: zip or dir?
 						employ.__deps__.PATH = [None]
 					
 					for __path__ in employ.__deps__.PATH:
@@ -204,7 +204,6 @@ class employ:
 									else: raise Exception
 							else:
 							# For local modules that are in a zip file:
-								# __isdir__ = False -- Revisit this LATER. For now, assume that all modules in zip files are not packages (that is, a single `.py` file).
 								if not "dir" in __params__:
 									__dir__ = __name__
 								else:
@@ -234,7 +233,6 @@ class employ:
 												__items__.append(path[depth])
 											elif pathlen == depth+2 and path[depth+1] == "":
 												__items__.append(path[depth])
-									print(__dir__, __items__)
 
 									if "__init__.py" in __items__:
 										__items__.remove("__init__.py")

@@ -29,8 +29,7 @@ from employ import *
 # print(file.read().decode())
 
 cas = employ("z")
-print(cas.__isdir__)
-print(cas.s)
+print(cas.__path__)
 # cas.helloworld()
 # cas.__thread__.join()
 # cas.__univ__.t = False
