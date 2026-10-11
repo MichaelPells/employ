@@ -234,14 +234,12 @@ class employ:
 											elif pathlen == depth+2 and path[depth+1] == "":
 												__items__.append(path[depth])
 
-									if "__init__.py" in __items__:
-										__items__.remove("__init__.py")
-										__modules__ = {}
-										__children__ = __self__.__objectify__()
+									__items__.remove("__init__.py")
+									__modules__ = {}
+									__children__ = __self__.__objectify__()
 
-										__filename__ = __dir__+"/__init__.py"
-										__io__ = __zip__.open(__filename__)
-									else: raise Exception
+									__filename__ = __dir__+"/__init__.py"
+									__io__ = __zip__.open(__filename__)
 
 							break
 						except:
