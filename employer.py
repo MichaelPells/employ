@@ -62,9 +62,14 @@
 import json
 import re
 
+def interpret(match):
+    code = match.group(0)
+
+    return code.upper()
+
 def process(value):
     if isinstance(value, str):
-        return value.upper()
+        return re.sub(r'\{[^}]*\}', interpret, value)
 
     if isinstance(value, list):
         return [process(item) for item in value]
@@ -84,7 +89,7 @@ data = '''
     "2": {},
     "c": {
         "x": 1,
-        "y": "hello",
+        "y": "{hello} my boy {hi}",
         "z": ["a", "b"]
     }
 }
@@ -93,14 +98,3 @@ data = '''
 result = process(json.loads(data, object_hook=process))
 
 print(result)
-
-script = "{hello} my boy {hi}"
-
-def interpret(match):
-    code = match.group(0)
-
-    return code.upper()
-
-output = re.sub(r'\{[^}]*\}', interpret, script)
-
-print(output)
