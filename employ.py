@@ -20,6 +20,12 @@ class employ:
 			import urllib.parse
 			self.parser = urllib.parse
 
+			import json
+			self.json = json
+
+			import re
+			self.re = re
+
 			from zipfile import ZipFile, Path
 			self.zip = ZipFile
 			self.zippath = Path
@@ -99,7 +105,7 @@ class employ:
 
 				del self
 
-				if __name__.endswith(".py"): __name__ = __name__[0:__name__.find(".py")]
+				if __name__.endswith(".py"): __name__ = __name__[0:__name__.find(".py")] # LATER: This probably contradicts JSON import. For now, "x.py" may translate to "x.py.json".
 
 				if "url" in __params__ and (__params__["url"].startswith("http://") or __params__["url"].startswith("https://")) and "path" not in __params__:
 				# For remote modules:
@@ -241,12 +247,87 @@ class employ:
 									__filename__ = __dir__+"/__init__.py"
 									__io__ = __zip__.open(__filename__)
 
+							__type__ = "PY"
 							break
 						except:
 						# When module is not found in the current path, continue to the next path.
 						# If no more paths are available, raise `ModuleNotFoundError`.
-							if employ.__deps__.PATH.index(__path__) < len(employ.__deps__.PATH)-1: continue
-							else: raise ModuleNotFoundError("No module named '"+__name__+"'")
+							# if employ.__deps__.PATH.index(__path__) < len(employ.__deps__.PATH)-1: continue
+							# else: raise ModuleNotFoundError("No module named '"+__name__+"'")
+
+							continue
+
+				if "__type__" not in locals():
+					for __path__ in employ.__deps__.PATH:
+					# For each path in the module search paths:
+						try:
+							if __path__ and not __path__.endswith(".zip"):
+							# For regular local modules (that are NOT in a zip file):
+								if __path__ != "" and not __path__.endswith("/"): __dir__ = __path__+"/"
+								else: __dir__ = __path__
+					
+								if not employ.__deps__.os.path.isdir(__dir__+__name__):
+									__isdir__ = False
+					
+									__filename__ = __name__+".json"
+									__io__ = open(__dir__+__filename__)
+
+								# else:
+								# 	__isdir__ = True
+								# 	__items__ = employ.__deps__.os.listdir(__dir__+__name__)
+								# 	if "__init__.py" in __items__:
+								# 		__items__.remove("__init__.py")
+								# 		__modules__ = {}
+								# 		__children__ = __self__.__objectify__()
+					
+								# 		__filename__ = __name__+"/__init__.py"
+								# 		__io__ = open(__dir__+__filename__)
+								# 	else: raise Exception
+							# else:
+							# # For local modules that are in a zip file:
+							# 	if not "dir" in __params__:
+							# 		__dir__ = __name__
+							# 	else:
+							# 		__dir__ = __params__["dir"] + "/" + __name__
+					
+							# 	if not "zip" in __params__:
+							# 		__zip__ = employ.__deps__.zip(__path__)
+							# 	else:
+							# 		__zip__ = __params__["zip"]
+					
+							# 	if __dir__+"/__init__.py" not in __zip__.namelist():
+							# 		__isdir__ = False
+							# 		__filename__ = __dir__+".py"
+							# 		__io__ = __zip__.open(__filename__)
+					
+							# 	else:
+							# 		__isdir__ = True
+					
+							# 		__items__ = []
+							# 		for __item__ in __zip__.namelist():
+							# 			path = __item__.split("/")
+							# 			depth = len(__dir__.split("/"))
+					
+							# 			if "/".join(path[:depth]) == __dir__:
+							# 				pathlen = len(path)
+							# 				if pathlen == depth+1 and path[depth] != "":
+							# 					__items__.append(path[depth])
+							# 				elif pathlen == depth+2 and path[depth+1] == "":
+							# 					__items__.append(path[depth])
+					
+							# 		__items__.remove("__init__.py")
+							# 		__modules__ = {}
+							# 		__children__ = __self__.__objectify__()
+					
+							# 		__filename__ = __dir__+"/__init__.py"
+							# 		__io__ = __zip__.open(__filename__)
+					
+							__type__ = "JSON"
+							break
+						except: continue
+
+				if "__type__" not in locals():
+					raise ModuleNotFoundError("No module named '"+__name__+"'")
 
 				# Allow for custom module name via the `name` parameter.
 				# Useful for avoiding naming conflicts when importing modules with the same file name.
@@ -282,7 +363,29 @@ class employ:
 				if not __isdir__ and "only" in __params__: __oldenv__ = dict(__env__) # Snapshots the current environment
 				elif __isdir__: __oldenv__ = dict(__env__) # Snapshots the current environment
 				__env__.pop("__self__")
-				exec(__script__, __env__)
+
+				if __type__ == "PY":
+					exec(__script__, __env__)
+				elif __type__ == "JSON":
+					def process(value):
+						if isinstance(value, str):
+							return __self__.__deps__.re.sub(r'\$\{[^}]*\}', interpret, value)
+					
+						if isinstance(value, list):
+							return [process(item) for item in value]
+					
+						if isinstance(value, dict):
+							return {process(key): process(val) for key, val in value.items()}
+					
+						return value
+
+					def interpret(match):
+						code = match.group(0)[2:-1]
+					
+						return str(eval(code, __global__))
+
+					data = process(__self__.__deps__.json.loads(__script__, object_hook=process))
+
 				if not __isdir__ and "only" in __params__:
 				# Perform selective addition of variables from the new environment to the old environment, based on the `only` parameter.
 					__newenv__ = __env__ # Snapshots the new environment
