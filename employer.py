@@ -28,7 +28,7 @@ from employ import *
 # file = zip("cashew.zip").open("cashew.py")
 # print(file.read().decode())
 
-cas = employ("jsondata", res={"xy": "Yesssss"})
+cas = employ("jsondata", res={"xy": "Yesssss", "yz": [1,2]})
 print(cas.data)
 # cas.helloworld()
 # cas.__thread__.join()

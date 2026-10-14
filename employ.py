@@ -371,7 +371,10 @@ class employ:
 				elif __type__ == "JSON":
 					def process(value):
 						if isinstance(value, str):
-							return employ.__deps__.re.sub(r'\$\{[^}]*\}', interpret, value)
+							if employ.__deps__.re.search(r'^\$\{[^}]*\}$', value):
+								return interpret(value)
+
+							return employ.__deps__.re.sub(r'\$\{[^}]*\}', interprets, value)
 					
 						if isinstance(value, list):
 							return [process(item) for item in value]
@@ -381,10 +384,15 @@ class employ:
 					
 						return value
 
-					def interpret(match):
-						code = match.group(0)[2:-1]
+					def interpret(code):
+						code = code[2:-1]
+				
+						return eval(code, __global__)
+						
+					def interprets(match):
+						code = match.group(0)
 					
-						return str(eval(code, __global__))
+						return str(interpret(code))
 
 					data = process(employ.__deps__.json.loads(__script__, object_hook=process))
 
