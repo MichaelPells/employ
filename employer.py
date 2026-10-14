@@ -63,13 +63,13 @@ import json
 import re
 
 def interpret(match):
-    code = match.group(0)
+    code = match.group(0)[2:-1]
 
-    return code.upper()
+    return str(eval(code, res))
 
 def process(value):
     if isinstance(value, str):
-        return re.sub(r'\{[^}]*\}', interpret, value)
+        return re.sub(r'\$\{[^}]*\}', interpret, value)
 
     if isinstance(value, list):
         return [process(item) for item in value]
@@ -78,6 +78,11 @@ def process(value):
         return {process(key): process(val) for key, val in value.items()}
 
     return value
+
+res = {
+    'x': 1,
+    'y': [1,2]
+}
 
 data = '''
 {
@@ -89,7 +94,7 @@ data = '''
     "2": {},
     "c": {
         "x": 1,
-        "y": "{hello} my boy {hi}",
+        "y": "${2+4} my boy ${y[1]}",
         "z": ["a", "b"]
     }
 }
