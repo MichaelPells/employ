@@ -364,12 +364,14 @@ class employ:
 				elif __isdir__: __oldenv__ = dict(__env__) # Snapshots the current environment
 				__env__.pop("__self__")
 
+				#
 				if __type__ == "PY":
 					exec(__script__, __env__)
+
 				elif __type__ == "JSON":
 					def process(value):
 						if isinstance(value, str):
-							return __self__.__deps__.re.sub(r'\$\{[^}]*\}', interpret, value)
+							return employ.__deps__.re.sub(r'\$\{[^}]*\}', interpret, value)
 					
 						if isinstance(value, list):
 							return [process(item) for item in value]
@@ -384,7 +386,7 @@ class employ:
 					
 						return str(eval(code, __global__))
 
-					data = process(__self__.__deps__.json.loads(__script__, object_hook=process))
+					data = process(employ.__deps__.json.loads(__script__, object_hook=process))
 
 				if not __isdir__ and "only" in __params__:
 				# Perform selective addition of variables from the new environment to the old environment, based on the `only` parameter.
