@@ -382,12 +382,37 @@ class employ:
 							s.value = value
 
 						def process(s):
+							if employ.__deps__.re.search(r'^\$[a-zA-Z_][a-zA-Z0-9_]*$', s.value):
+								s.code = s.value
+
+								try:
+									return s.evaluate()
+								except NameError:
+									return s.code
+
 							if employ.__deps__.re.search(r'^' + s.start + r'((?:[^'+s.end+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.end+r')*?)' + s.end+r'$', s.value):
 								s.code = s.value
 								return s.interpret()
 
-							return employ.__deps__.re.sub(r'(?<!'+s.escape+r')(?:'+s.escape*2+r')*' + s.start + r'((?:[^'+s.end+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.end+r')*?)' + s.end, s.interprets, s.value)
+							script = employ.__deps__.re.sub(r'\$[a-zA-Z_][a-zA-Z0-9_]*(?=\s|$)', s.evaluates, s.value)
+							script = employ.__deps__.re.sub(r'(?<!'+s.escape+r')(?:'+s.escape*2+r')*' + s.start + r'((?:[^'+s.end+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.end+r')*?)' + s.end, s.interprets, script)
 
+							return script
+
+						def evaluate(s):
+							expression = s.code
+							s.expression = expression[1:]
+
+							return eval(s.expression, __global__)
+
+						def evaluates(s, match):
+							s.code = match.group()
+
+							try:
+								return str(s.evaluate())
+							except NameError as e:
+								return s.code
+					
 						def interpret(s):
 							expression = s.code.replace(s.escape+s.end, s.end).replace(s.escape*2, s.escape)
 							s.expression = expression[expression.find('`') + 1: -1]
