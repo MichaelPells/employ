@@ -372,56 +372,61 @@ class employ:
 					class processor:
 						def __init__(s, value):
 							# RegEx:
+							(r'^\$[a-zA-Z_][a-zA-Z0-9_]*$')
 							(r'^\$`((?:[^`~]|~~|~`)*?)`$')
+							(r'\$[a-zA-Z_][a-zA-Z0-9_]*(?=\s|\$|$)')
 							(r'(?<!~)(?:~~)*\$`((?:[^`~]|~~|~`)*?)`')
 
-							s.start = '\$`'
-							s.end = '`'
+							s.start = '\$'
+							s.group = '`'
 							s.escape = '~'
 
 							s.value = value
 
 						def process(s):
-							if employ.__deps__.re.search(r'^\$[a-zA-Z_][a-zA-Z0-9_]*$', s.value):
+							if employ.__deps__.re.search(r'^' + s.start + r'[a-zA-Z_][a-zA-Z0-9_]*$', s.value):
 								s.code = s.value
 
 								try:
-									return s.evaluate()
+									return s.retrieve()
 								except NameError:
 									return s.code
 
-							if employ.__deps__.re.search(r'^' + s.start + r'((?:[^'+s.end+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.end+r')*?)' + s.end+r'$', s.value):
+							if employ.__deps__.re.search(r'^' + s.start+s.group + r'((?:[^'+s.group+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.group+r')*?)' + s.group+r'$', s.value):
 								s.code = s.value
 								return s.interpret()
 
-							script = employ.__deps__.re.sub(r'\$[a-zA-Z_][a-zA-Z0-9_]*(?=\s|$)', s.evaluates, s.value)
-							script = employ.__deps__.re.sub(r'(?<!'+s.escape+r')(?:'+s.escape*2+r')*' + s.start + r'((?:[^'+s.end+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.end+r')*?)' + s.end, s.interprets, script)
+							script = employ.__deps__.re.sub(s.start + r'[a-zA-Z_][a-zA-Z0-9_]*(?=\s|' + s.start + r'|$)', s.retrieves, s.value)
+							script = employ.__deps__.re.sub(r'(?<!'+s.escape+r')(?:'+s.escape*2+r')*' + s.start+s.group + r'((?:[^'+s.group+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.group+r')*?)' + s.group, s.interprets, script)
 
 							return script
 
-						def evaluate(s):
+						def retrieve(s):
 							expression = s.code
 							s.expression = expression[1:]
 
-							return eval(s.expression, __global__)
+							return s.evaluate()
 
-						def evaluates(s, match):
+						def retrieves(s, match):
 							s.code = match.group()
 
 							try:
-								return str(s.evaluate())
+								return str(s.retrieve())
 							except NameError as e:
 								return s.code
 					
 						def interpret(s):
-							expression = s.code.replace(s.escape+s.end, s.end).replace(s.escape*2, s.escape)
-							s.expression = expression[expression.find('`') + 1: -1]
+							expression = s.code.replace(s.escape+s.group, s.group).replace(s.escape*2, s.escape)
+							s.expression = expression[expression.find(s.group) + 1: -1]
 
-							return eval(s.expression, __global__)
+							return s.evaluate()
 				
 						def interprets(s, match):
 							s.code = match.group()
-							return str(s.interpret())	
+							return str(s.interpret())
+
+						def evaluate(s):
+							return eval(s.expression, __global__)
 
 					def process(value):
 						if isinstance(value, str):
