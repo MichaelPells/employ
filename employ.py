@@ -369,12 +369,37 @@ class employ:
 					exec(__script__, __env__)
 
 				elif __type__ == "JSON":
+					class processor:
+						def __init__(s, value):
+							# RegEx: r'(?<!~)(?:~~)*\$`((?:[^`~]|~~|~`)*?)`'
+
+							s.start = '\$`'
+							s.end = '`'
+							s.escape = '~'
+
+							s.value = value
+
+						def process(s):
+							# if employ.__deps__.re.search(r'^\$\{[^}]*\}$', value):
+							#	s.code = value
+							# 	return interpret()
+
+							return employ.__deps__.re.sub(r'(?<!'+s.escape+r')(?:'+s.escape*2+r')*' + s.start + r'((?:[^'+s.end+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.end+r')*?)' + s.end, s.interprets, s.value)
+
+						def interpret(s):
+							expression = s.code.replace(s.escape+s.end, s.end).replace(s.escape*2, s.escape)
+							print(expression)
+							exit()
+
+							return eval(s.code, __global__)
+				
+						def interprets(s, match):
+							s.code = match.group()
+							return str(s.interpret())	
+
 					def process(value):
 						if isinstance(value, str):
-							if employ.__deps__.re.search(r'^\$\{[^}]*\}$', value):
-								return interpret(value)
-
-							return employ.__deps__.re.sub(r'\$\{[^}]*\}', interprets, value)
+							return processor(value).process()
 					
 						if isinstance(value, list):
 							return [process(item) for item in value]
@@ -383,16 +408,6 @@ class employ:
 							return {process(key): process(val) for key, val in value.items()}
 					
 						return value
-
-					def interpret(code):
-						code = code[2:-1]
-				
-						return eval(code, __global__)
-						
-					def interprets(match):
-						code = match.group(0)
-					
-						return str(interpret(code))
 
 					data = process(employ.__deps__.json.loads(__script__, object_hook=process))
 
