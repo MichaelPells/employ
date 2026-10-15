@@ -371,7 +371,9 @@ class employ:
 				elif __type__ == "JSON":
 					class processor:
 						def __init__(s, value):
-							# RegEx: r'(?<!~)(?:~~)*\$`((?:[^`~]|~~|~`)*?)`'
+							# RegEx:
+							(r'^\$`((?:[^`~]|~~|~`)*?)`$')
+							(r'(?<!~)(?:~~)*\$`((?:[^`~]|~~|~`)*?)`')
 
 							s.start = '\$`'
 							s.end = '`'
@@ -380,18 +382,17 @@ class employ:
 							s.value = value
 
 						def process(s):
-							# if employ.__deps__.re.search(r'^\$\{[^}]*\}$', value):
-							#	s.code = value
-							# 	return interpret()
+							if employ.__deps__.re.search(r'^' + s.start + r'((?:[^'+s.end+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.end+r')*?)' + s.end+r'$', s.value):
+								s.code = s.value
+								return s.interpret()
 
 							return employ.__deps__.re.sub(r'(?<!'+s.escape+r')(?:'+s.escape*2+r')*' + s.start + r'((?:[^'+s.end+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.end+r')*?)' + s.end, s.interprets, s.value)
 
 						def interpret(s):
 							expression = s.code.replace(s.escape+s.end, s.end).replace(s.escape*2, s.escape)
-							print(expression)
-							exit()
+							s.expression = expression[expression.find('`') + 1: -1]
 
-							return eval(s.code, __global__)
+							return eval(s.expression, __global__)
 				
 						def interprets(s, match):
 							s.code = match.group()
