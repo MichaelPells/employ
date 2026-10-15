@@ -377,6 +377,7 @@ class employ:
 							(r'\$[a-zA-Z_][a-zA-Z0-9_]*(?=\s|\$|$)')
 							(r'(?<!~)(?:~~)*\$`((?:[^`~]|~~|~`)*?)`')
 
+							s.delim = '$'
 							s.start = '\$'
 							s.group = '`'
 							s.escape = '~'
@@ -396,16 +397,20 @@ class employ:
 								s.code = s.value
 								return s.interpret()
 
-							script = employ.__deps__.re.sub(s.start + r'[a-zA-Z_][a-zA-Z0-9_]*(?=\s|' + s.start + r'|$)', s.retrieves, s.value)
+							script = employ.__deps__.re.sub(r'(?<!'+s.escape+r')(?:'+s.escape*2+r')*' + s.start + r'[a-zA-Z_][a-zA-Z0-9_]*(?=\s|' + s.start + r'|$)', s.retrieves, s.value)
 							script = employ.__deps__.re.sub(r'(?<!'+s.escape+r')(?:'+s.escape*2+r')*' + s.start+s.group + r'((?:[^'+s.group+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.group+r')*?)' + s.group, s.interprets, script)
 
 							return script
 
 						def retrieve(s):
-							expression = s.code
-							s.expression = expression[1:]
+							expression = s.code.replace(s.escape*2, s.escape)
+							elements = expression.split(s.delim, 1)
+							s.expression = elements[1]
 
-							return s.evaluate()
+							if elements[0]:
+								return f"{elements[0]}{s.evaluate()}"
+							else:
+								return s.evaluate()
 
 						def retrieves(s, match):
 							s.code = match.group()
@@ -417,9 +422,13 @@ class employ:
 					
 						def interpret(s):
 							expression = s.code.replace(s.escape+s.group, s.group).replace(s.escape*2, s.escape)
-							s.expression = expression[expression.find(s.group) + 1: -1]
+							elements = expression.split(s.delim, 1)
+							s.expression = elements[1][1: -1]
 
-							return s.evaluate()
+							if elements[0]:
+								return f"{elements[0]}{s.evaluate()}"
+							else:
+								return s.evaluate()
 				
 						def interprets(s, match):
 							s.code = match.group()
