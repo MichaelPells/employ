@@ -372,12 +372,11 @@ class employ:
 					class processor:
 						def __init__(s, value):
 							# RegEx:
-							(r'^\$[a-zA-Z_][a-zA-Z0-9_]*$')
+							(r'^\$([a-zA-Z_][a-zA-Z0-9_]*)$')
 							(r'^\$`((?:[^`~]|~~|~`)*?)`$')
-							(r'\$[a-zA-Z_][a-zA-Z0-9_]*(?=\s|\$|$)')
-							(r'(?<!~)(?:~~)*\$`((?:[^`~]|~~|~`)*?)`')
+							(r'((?<!~)(?:~~)*)\$([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$)')
+							(r'((?<!~)(?:~~)*)\$`((?:[^`~]|~~|~`)*?)`')
 
-							s.delim = '$'
 							s.start = '\$'
 							s.group = '`'
 							s.escape = '~'
@@ -385,54 +384,57 @@ class employ:
 							s.value = value
 
 						def process(s):
-							if employ.__deps__.re.search(r'^' + s.start + r'[a-zA-Z_][a-zA-Z0-9_]*$', s.value):
-								s.code = s.value
+							match = employ.__deps__.re.search(r'^' + s.start + r'([a-zA-Z_][a-zA-Z0-9_]*)$', s.value)
+							if match:
+								s.code = match.group()
+								s.expression = match.group(1)
 
 								try:
-									return s.retrieve()
+									return s.evaluate()
 								except NameError:
 									return s.code
 
-							if employ.__deps__.re.search(r'^' + s.start+s.group + r'((?:[^'+s.group+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.group+r')*?)' + s.group+r'$', s.value):
-								s.code = s.value
+							match = employ.__deps__.re.search(r'^' + s.start+s.group + r'((?:[^'+s.group+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.group+r')*?)' + s.group+r'$', s.value)
+							if match:
+								s.code = match.group()
+								s.expression = match.group(1)
+
 								return s.interpret()
 
-							script = employ.__deps__.re.sub(r'(?<!'+s.escape+r')(?:'+s.escape*2+r')*' + s.start + r'[a-zA-Z_][a-zA-Z0-9_]*(?=\s|' + s.start + r'|$)', s.retrieves, s.value)
-							script = employ.__deps__.re.sub(r'(?<!'+s.escape+r')(?:'+s.escape*2+r')*' + s.start+s.group + r'((?:[^'+s.group+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.group+r')*?)' + s.group, s.interprets, script)
+							script = employ.__deps__.re.sub(r'('+s.escape+r'*)' + s.start + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + s.start + r'|$)', s.retrieves, s.value)
+							script = employ.__deps__.re.sub(r'('+s.escape+r'*)' + s.start+s.group + r'((?:[^'+s.group+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.group+r')*?)' + s.group, s.interprets, script)
 
 							return script
 
-						def retrieve(s):
-							expression = s.code.replace(s.escape*2, s.escape)
-							elements = expression.split(s.delim, 1)
-							s.expression = elements[1]
-
-							if elements[0]:
-								return f"{elements[0]}{s.evaluate()}"
-							else:
-								return s.evaluate()
-
 						def retrieves(s, match):
 							s.code = match.group()
+							s.pre = match.group(1)
+							s.expression = match.group(2)
 
 							try:
-								return str(s.retrieve())
-							except NameError as e:
+								result = s.evaluate()
+
+								if len(s.pre) % 2 == 1:
+									return s.code[1:]
+								else:
+									return f"{s.pre}{s.evaluate()}"
+							except NameError:
 								return s.code
 					
 						def interpret(s):
-							expression = s.code.replace(s.escape+s.group, s.group).replace(s.escape*2, s.escape)
-							elements = expression.split(s.delim, 1)
-							s.expression = elements[1][1: -1]
+							s.expression = s.expression.replace(s.escape+s.group, s.group).replace(s.escape*2, s.escape)
 
-							if elements[0]:
-								return f"{elements[0]}{s.evaluate()}"
-							else:
-								return s.evaluate()
+							return s.evaluate()
 				
 						def interprets(s, match):
 							s.code = match.group()
-							return str(s.interpret())
+							s.pre = match.group(1)
+							s.expression = match.group(2)
+
+							if len(s.pre) % 2 == 1:
+								return s.code[1:]
+							else:
+								return f"{s.pre}{s.interpret()}"
 
 						def evaluate(s):
 							return eval(s.expression, __global__)
@@ -449,7 +451,7 @@ class employ:
 					
 						return value
 
-					data = process(employ.__deps__.json.loads(__script__, object_hook=process))
+					data = process(employ.__deps__.json.loads(__script__))
 
 				if not __isdir__ and "only" in __params__:
 				# Perform selective addition of variables from the new environment to the old environment, based on the `only` parameter.

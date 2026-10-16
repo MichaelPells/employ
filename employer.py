@@ -59,8 +59,8 @@ print(cas.data)
 
 
 
-# import json
-# import re
+import json
+import re
 
 # def interpret(match):
 #     code = match.group(0)[2:-1]
@@ -103,3 +103,48 @@ print(cas.data)
 # result = process(json.loads(data, object_hook=process))
 
 # print(result)
+
+# xy = "Yesssss"
+# yz = [1,2]
+
+# text1 = """"~$`'2+4~~$yz '` my boy $`yz` hi $yz"
+# """
+# text2 = """
+# {
+#     "c": {"y": "~$`'2+4~~$yz '` my boy $yz hi $yz"}
+# }
+# """
+
+# def changer(match):
+#     pre = match.group(1)
+#     code = match.group()
+
+#     if len(pre) % 2 == 1:
+#         return code[1:]
+#     else:
+#         return f"{pre}{eval(match.group(2))}"
+
+
+# def processor(value):
+#     return re.sub(r'(~*)\$`((?:[^`~]|~~|~`)*?)`', changer, value)
+
+# def process(value):
+#     if isinstance(value, str):
+#         result = processor(value)
+
+#     elif isinstance(value, list):
+#         print(f"\n           {value}")
+#         result = [process(item) for item in value]
+
+#     elif isinstance(value, dict):
+#         print(f"\n           {value}")
+#         result = {key: process(val) for key, val in value.items()}
+
+#     else:
+#         result = value
+
+#     print(f"{value}    --->    {result}")
+#     return result
+
+# data = process(json.loads(text2))
+# print(data)
