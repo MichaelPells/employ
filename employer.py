@@ -104,47 +104,24 @@ import re
 
 # print(result)
 
-# xy = "Yesssss"
-# yz = [1,2]
+# (r'(~*)\$([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$)')
+# (r'(~*)\$`((?:[^`~]|~~|~`)*?)`')
 
-# text1 = """"~$`'2+4~~$yz '` my boy $`yz` hi $yz"
-# """
-# text2 = """
-# {
-#     "c": {"y": "~$`'2+4~~$yz '` my boy $yz hi $yz"}
-# }
-# """
+# (r'(~*)\$([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$)')
+# pattern = r'(~*)\$(`((?:[^`~]|~~|~`)*?)`|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$))'
 
-# def changer(match):
-#     pre = match.group(1)
-#     code = match.group()
+# text = "~~$`'2+4~~$ab '` my boy $bc hi $de"
 
-#     if len(pre) % 2 == 1:
-#         return code[1:]
-#     else:
-#         return f"{pre}{eval(match.group(2))}"
+# def changer(match: re.Match):
+#     print(f"{list(enumerate(match.groups(), start=1))}    --->   {match.group(4)}")
+#     print()
+#     return match.group()
 
+# newtext = re.sub(pattern, changer, text)
+# print(newtext)
 
-# def processor(value):
-#     return re.sub(r'(~*)\$`((?:[^`~]|~~|~`)*?)`', changer, value)
+# [(1, '~~'), (2, "`'2+4~~$ab '`"), (3, "'2+4~~$ab '"), (4, None)] # 1, 3
 
-# def process(value):
-#     if isinstance(value, str):
-#         result = processor(value)
+# [(1, ''), (2, 'bc'), (3, None), (4, 'bc')] # 1, 4
 
-#     elif isinstance(value, list):
-#         print(f"\n           {value}")
-#         result = [process(item) for item in value]
-
-#     elif isinstance(value, dict):
-#         print(f"\n           {value}")
-#         result = {key: process(val) for key, val in value.items()}
-
-#     else:
-#         result = value
-
-#     print(f"{value}    --->    {result}")
-#     return result
-
-# data = process(json.loads(text2))
-# print(data)
+# [(1, ''), (2, 'de'), (3, None), (4, 'de')]

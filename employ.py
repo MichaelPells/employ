@@ -377,9 +377,15 @@ class employ:
 							(r'((?<!~)(?:~~)*)\$([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$)')
 							(r'((?<!~)(?:~~)*)\$`((?:[^`~]|~~|~`)*?)`')
 
+							# Update:
+							(r'(~*)\$([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$)')
+							(r'(~*)\$`((?:[^`~]|~~|~`)*?)`')
+
 							s.start = '\$'
 							s.group = '`'
 							s.escape = '~'
+
+							s.pattern = r'(~*)\$(`((?:[^`~]|~~|~`)*?)`|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$))'
 
 							s.value = value
 
@@ -401,23 +407,14 @@ class employ:
 
 								return s.interpret()
 
-							script = employ.__deps__.re.sub(r'('+s.escape+r'*)' + s.start + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + s.start + r'|$)', s.retrieves, s.value)
-							script = employ.__deps__.re.sub(r'('+s.escape+r'*)' + s.start+s.group + r'((?:[^'+s.group+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.group+r')*?)' + s.group, s.interprets, script)
+							a = r'('+s.escape+r'*)' + s.start + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + s.start + r'|$)'
+							b = r'('+s.escape+r'*)' + s.start+s.group + r'((?:[^'+s.group+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.group+r')*?)' + s.group
+							
+							return employ.__deps__.re.sub(s.pattern, s.interprets, s.value)
 
-							return script
-
-						def retrieves(s, match):
-							s.code = match.group()
-							s.pre = match.group(1)
-							s.expression = match.group(2)
-
+						def retrieve(s):
 							try:
-								result = s.evaluate()
-
-								if len(s.pre) % 2 == 1:
-									return s.code[1:]
-								else:
-									return f"{s.pre}{s.evaluate()}"
+								return s.evaluate()
 							except NameError:
 								return s.code
 					
@@ -429,12 +426,18 @@ class employ:
 						def interprets(s, match):
 							s.code = match.group()
 							s.pre = match.group(1)
-							s.expression = match.group(2)
 
 							if len(s.pre) % 2 == 1:
 								return s.code[1:]
-							else:
+
+							s.pre = s.pre.replace(s.escape*2, s.escape)
+
+							if match.group(3):
+								s.expression = match.group(3)
 								return f"{s.pre}{s.interpret()}"
+							else:
+								s.expression = match.group(4)
+								return f"{s.pre}{s.retrieve()}"
 
 						def evaluate(s):
 							return eval(s.expression, __global__)
