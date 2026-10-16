@@ -370,27 +370,36 @@ class employ:
 
 				elif __type__ == "JSON":
 					class processor:
+						# # Old:
+						# (r'((?<!~)(?:~~)*)\$([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$)')
+						# (r'((?<!~)(?:~~)*)\$`((?:[^`~]|~~|~`)*?)`')
+						
+						# # Update:
+						# (r'(~*)\$([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$)')
+						# (r'(~*)\$`((?:[^`~]|~~|~`)*?)`')
+						
+						# RegEx:
+						(r'(~*)\$(`((?:[^`~]|~~|~`)*?)`|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$))')
+						(r'^\$([a-zA-Z_][a-zA-Z0-9_]*)$')
+						(r'^\$`((?:[^`~]|~~|~`)*?)`$')
+						
+						start = '\$'
+						group = '`'
+						escape = '~'
+
+						a = r'('+escape+r'*)' + start + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + start + r'|$)'
+						b = r'('+escape+r'*)' + start+group + r'((?:[^'+group+escape+r']|'+escape*2+r'|'+escape+group+r')*?)' + group
+						
+						pattern = r'('+escape+r'*)' + start + r'(' + group + r'((?:[^'+group+escape+r']|'+escape*2+r'|'+escape+group+r')*?)' + group + r'|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + start + r'|$))'
+						patternAnyTypeUngrouped = r'^' + start + r'([a-zA-Z_][a-zA-Z0-9_]*)$'
+						patternAnyTypeGrouped = r'^' + start+group + r'((?:[^'+group+escape+r']|'+escape*2+r'|'+escape+group+r')*?)' + group+r'$'
+
 						def __init__(s, value):
-							# RegEx:
-							(r'^\$([a-zA-Z_][a-zA-Z0-9_]*)$')
-							(r'^\$`((?:[^`~]|~~|~`)*?)`$')
-							(r'((?<!~)(?:~~)*)\$([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$)')
-							(r'((?<!~)(?:~~)*)\$`((?:[^`~]|~~|~`)*?)`')
-
-							# Update:
-							(r'(~*)\$([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$)')
-							(r'(~*)\$`((?:[^`~]|~~|~`)*?)`')
-
-							s.start = '\$'
-							s.group = '`'
-							s.escape = '~'
-
-							s.pattern = r'(~*)\$(`((?:[^`~]|~~|~`)*?)`|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$))'
-
 							s.value = value
+							s.p = processor
 
 						def process(s):
-							match = employ.__deps__.re.search(r'^' + s.start + r'([a-zA-Z_][a-zA-Z0-9_]*)$', s.value)
+							match = employ.__deps__.re.search(s.p.patternAnyTypeUngrouped, s.value)
 							if match:
 								s.code = match.group()
 								s.expression = match.group(1)
@@ -400,17 +409,14 @@ class employ:
 								except NameError:
 									return s.code
 
-							match = employ.__deps__.re.search(r'^' + s.start+s.group + r'((?:[^'+s.group+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.group+r')*?)' + s.group+r'$', s.value)
+							match = employ.__deps__.re.search(s.p.patternAnyTypeGrouped, s.value)
 							if match:
 								s.code = match.group()
 								s.expression = match.group(1)
 
 								return s.interpret()
-
-							a = r'('+s.escape+r'*)' + s.start + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + s.start + r'|$)'
-							b = r'('+s.escape+r'*)' + s.start+s.group + r'((?:[^'+s.group+s.escape+r']|'+s.escape*2+r'|'+s.escape+s.group+r')*?)' + s.group
 							
-							return employ.__deps__.re.sub(s.pattern, s.interprets, s.value)
+							return employ.__deps__.re.sub(s.p.pattern, s.interprets, s.value)
 
 						def retrieve(s):
 							try:
@@ -419,7 +425,7 @@ class employ:
 								return s.code
 					
 						def interpret(s):
-							s.expression = s.expression.replace(s.escape+s.group, s.group).replace(s.escape*2, s.escape)
+							s.expression = s.expression.replace(s.p.escape+s.p.group, s.p.group).replace(s.p.escape*2, s.p.escape)
 
 							return s.evaluate()
 				
@@ -430,7 +436,7 @@ class employ:
 							if len(s.pre) % 2 == 1:
 								return s.code[1:]
 
-							s.pre = s.pre.replace(s.escape*2, s.escape)
+							s.pre = s.pre.replace(s.p.escape*2, s.p.escape)
 
 							if match.group(3):
 								s.expression = match.group(3)
