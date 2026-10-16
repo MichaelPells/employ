@@ -369,7 +369,7 @@ class employ:
 					exec(__script__, __env__)
 
 				elif __type__ == "JSON":
-					class processor:
+					class interpreter:
 						# # Old:
 						# (r'((?<!~)(?:~~)*)\$([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$)')
 						# (r'((?<!~)(?:~~)*)\$`((?:[^`~]|~~|~`)*?)`')
@@ -386,7 +386,7 @@ class employ:
 						start = '\$'
 						group = '`'
 						escape = '~'
-
+						
 						a = r'('+escape+r'*)' + start + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + start + r'|$)'
 						b = r'('+escape+r'*)' + start+group + r'((?:[^'+group+escape+r']|'+escape*2+r'|'+escape+group+r')*?)' + group
 						
@@ -394,73 +394,102 @@ class employ:
 						patternAnyTypeUngrouped = r'^' + start + r'([a-zA-Z_][a-zA-Z0-9_]*)$'
 						patternAnyTypeGrouped = r'^' + start+group + r'((?:[^'+group+escape+r']|'+escape*2+r'|'+escape+group+r')*?)' + group+r'$'
 
-						def __init__(s, value):
-							s.value = value
-							s.p = processor
+						@staticmethod
+						def process(value):
+							if isinstance(value, str):
+								return interpreter.processor(value)
 
-						def process(s):
-							match = employ.__deps__.re.search(s.p.patternAnyTypeUngrouped, s.value)
+							if isinstance(value, list):
+								return [interpreter.process(item) for item in value]
+
+							if isinstance(value, dict):
+								return {interpreter.process(key): interpreter.process(val) for key, val in value.items()}
+
+							return value
+
+						@staticmethod
+						def processor(value):
+							i = interpreter
+
+							match = employ.__deps__.re.search(i.patternAnyTypeUngrouped, value)
 							if match:
-								s.code = match.group()
-								s.expression = match.group(1)
-
-								try:
-									return s.evaluate()
-								except NameError:
-									return s.code
-
-							match = employ.__deps__.re.search(s.p.patternAnyTypeGrouped, s.value)
+								return interpreter().interpretATUG(match)
+						
+							match = employ.__deps__.re.search(i.patternAnyTypeGrouped, value)
 							if match:
-								s.code = match.group()
-								s.expression = match.group(1)
+								return interpreter().interpretATG(match)
+						
+							return employ.__deps__.re.sub(i.pattern, i.interpreter, value)
 
-								return s.interpret()
+						@staticmethod
+						def interpreter(match):
+							return interpreter().interprets(match)
+
+
+						def __init__(s):
+							s.valid = True
+
+						def interpretATUG(s, match):
+							s.code = match.group()
+							s.expression = match.group(1)
 							
-							return employ.__deps__.re.sub(s.p.pattern, s.interprets, s.value)
+							try:
+								return s.evaluate()
+							except NameError:
+								s.valid = False
+								return s.code
+
+						def interpretATG(s, match):
+							s.code = match.group()
+							s.expression = match.group(1)
+					
+							return s.interpret()
+
+						def interprets(s, match):
+							s.code = match.group()
+							s.pre = match.group(1)
+					
+							if match.group(3):
+								if len(s.pre) % 2 == 1:
+									s.valid = False
+									return s.code[1:]
+					
+								s.pre = s.pre.replace(s.escape*2, s.escape)
+					
+								s.expression = match.group(3)
+					
+								return f"{s.pre}{s.interpret()}"
+							else:
+								s.expression = match.group(4)
+								result = s.retrieve()
+					
+								if s.valid:
+									if len(s.pre) % 2 == 1:
+										s.valid = False
+										return s.code[1:]
+					
+									s.pre = s.pre.replace(s.escape*2, s.escape)
+					
+									return f"{s.pre}{result}"
+								else:
+									return f"{result}"
+
+						def interpret(s):
+							s.expression = s.expression.replace(s.escape+s.group, s.group).replace(s.escape*2, s.escape)
+
+							return s.evaluate()
 
 						def retrieve(s):
 							try:
 								return s.evaluate()
 							except NameError:
+								s.valid = False
 								return s.code
-					
-						def interpret(s):
-							s.expression = s.expression.replace(s.p.escape+s.p.group, s.p.group).replace(s.p.escape*2, s.p.escape)
-
-							return s.evaluate()
-				
-						def interprets(s, match):
-							s.code = match.group()
-							s.pre = match.group(1)
-
-							if len(s.pre) % 2 == 1:
-								return s.code[1:]
-
-							s.pre = s.pre.replace(s.p.escape*2, s.p.escape)
-
-							if match.group(3):
-								s.expression = match.group(3)
-								return f"{s.pre}{s.interpret()}"
-							else:
-								s.expression = match.group(4)
-								return f"{s.pre}{s.retrieve()}"
-
+			
 						def evaluate(s):
-							return eval(s.expression, __global__)
+							return eval(s.expression, __global__)			
 
-					def process(value):
-						if isinstance(value, str):
-							return processor(value).process()
-					
-						if isinstance(value, list):
-							return [process(item) for item in value]
-					
-						if isinstance(value, dict):
-							return {process(key): process(val) for key, val in value.items()}
-					
-						return value
-
-					data = process(employ.__deps__.json.loads(__script__))
+					data = interpreter.process(employ.__deps__.json.loads(__script__))
 
 				if not __isdir__ and "only" in __params__:
 				# Perform selective addition of variables from the new environment to the old environment, based on the `only` parameter.
