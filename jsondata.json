@@ -10,7 +10,7 @@
     "c": {
         "x": 1,
         "y": "?~2+4~ my boy ~yz hi ~yz",
-        "y1": "?$2+4$ my boy $yz hi $yz",
+        "y1": "??$`2+4` my boy $yz hi $yz",
         "z": ["a", "b"]
     }
 }

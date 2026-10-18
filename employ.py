@@ -351,6 +351,7 @@ class employ:
 						start = '\$'
 						group = '`'
 						escape = '\?'
+						escape_ = '?'
 						
 						a = r'('+escape+r'*)' + start + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + start + r'|$)'
 						b = r'('+escape+r'*)' + start+group + r'((?:[^'+group+escape+r']|'+escape*2+r'|'+escape+group+r')*?)' + group
@@ -419,7 +420,7 @@ class employ:
 									s.valid = False
 									return s.code[1:]
 					
-								s.pre = s.pre.replace(s.escape*2, s.escape)
+								s.pre = s.pre.replace(s.escape_*2, s.escape_)
 					
 								s.expression = match.group(3)
 					
@@ -433,14 +434,14 @@ class employ:
 										s.valid = False
 										return s.code[1:]
 					
-									s.pre = s.pre.replace(s.escape*2, s.escape)
+									s.pre = s.pre.replace(s.escape_*2, s.escape_)
 					
 									return f"{s.pre}{result}"
 								else:
 									return f"{result}"
 
 						def interpret(s):
-							s.expression = s.expression.replace(s.escape+s.group, s.group).replace(s.escape*2, s.escape)
+							s.expression = s.expression.replace(s.escape_+s.group, s.group).replace(s.escape_*2, s.escape_)
 
 							return s.evaluate()
 
