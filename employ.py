@@ -179,7 +179,7 @@ class employ:
 				# For local modules:
 					__source__ = "local"
 					if "path" in __params__:
-						employ.__deps__.PATH = [__params__["path"]]
+						employ.__deps__.PATH = [__params__["path"]] # ISSUE: This would most likely update employ.__deps__.PATH generally. Bad!
 					elif "zip" in __params__: # LATER: zip or dir?
 						employ.__deps__.PATH = [None]
 					
@@ -250,10 +250,10 @@ class employ:
 							__type__ = "PY"
 							break
 						except:
-						# When module is not found in the current path, continue to the next path.
-						# If no more paths are available, raise `ModuleNotFoundError`.
-							# if employ.__deps__.PATH.index(__path__) < len(employ.__deps__.PATH)-1: continue
-							# else: raise ModuleNotFoundError("No module named '"+__name__+"'")
+						# # When module is not found in the current path, continue to the next path.
+						# # If no more paths are available, raise `ModuleNotFoundError`.
+						# 	if employ.__deps__.PATH.index(__path__) < len(employ.__deps__.PATH)-1: continue
+						# 	else: raise ModuleNotFoundError("No module named '"+__name__+"'")
 
 							continue
 
@@ -266,61 +266,26 @@ class employ:
 								if __path__ != "" and not __path__.endswith("/"): __dir__ = __path__+"/"
 								else: __dir__ = __path__
 					
-								if not employ.__deps__.os.path.isdir(__dir__+__name__):
-									__isdir__ = False
-					
-									__filename__ = __name__+".json"
-									__io__ = open(__dir__+__filename__)
+								__isdir__ = False
+				
+								__filename__ = __name__+".json"
+								__io__ = open(__dir__+__filename__)
 
-								# else:
-								# 	__isdir__ = True
-								# 	__items__ = employ.__deps__.os.listdir(__dir__+__name__)
-								# 	if "__init__.py" in __items__:
-								# 		__items__.remove("__init__.py")
-								# 		__modules__ = {}
-								# 		__children__ = __self__.__objectify__()
+							else:
+							# For local modules that are in a zip file:
+								if not "dir" in __params__:
+									__dir__ = __name__
+								else:
+									__dir__ = __params__["dir"] + "/" + __name__
 					
-								# 		__filename__ = __name__+"/__init__.py"
-								# 		__io__ = open(__dir__+__filename__)
-								# 	else: raise Exception
-							# else:
-							# # For local modules that are in a zip file:
-							# 	if not "dir" in __params__:
-							# 		__dir__ = __name__
-							# 	else:
-							# 		__dir__ = __params__["dir"] + "/" + __name__
-					
-							# 	if not "zip" in __params__:
-							# 		__zip__ = employ.__deps__.zip(__path__)
-							# 	else:
-							# 		__zip__ = __params__["zip"]
-					
-							# 	if __dir__+"/__init__.py" not in __zip__.namelist():
-							# 		__isdir__ = False
-							# 		__filename__ = __dir__+".py"
-							# 		__io__ = __zip__.open(__filename__)
-					
-							# 	else:
-							# 		__isdir__ = True
-					
-							# 		__items__ = []
-							# 		for __item__ in __zip__.namelist():
-							# 			path = __item__.split("/")
-							# 			depth = len(__dir__.split("/"))
-					
-							# 			if "/".join(path[:depth]) == __dir__:
-							# 				pathlen = len(path)
-							# 				if pathlen == depth+1 and path[depth] != "":
-							# 					__items__.append(path[depth])
-							# 				elif pathlen == depth+2 and path[depth+1] == "":
-							# 					__items__.append(path[depth])
-					
-							# 		__items__.remove("__init__.py")
-							# 		__modules__ = {}
-							# 		__children__ = __self__.__objectify__()
-					
-							# 		__filename__ = __dir__+"/__init__.py"
-							# 		__io__ = __zip__.open(__filename__)
+								if not "zip" in __params__:
+									__zip__ = employ.__deps__.zip(__path__)
+								else:
+									__zip__ = __params__["zip"]
+
+								__isdir__ = False
+								__filename__ = __dir__+".json"
+								__io__ = __zip__.open(__filename__)
 					
 							__type__ = "JSON"
 							break
@@ -385,7 +350,7 @@ class employ:
 						
 						start = '\$'
 						group = '`'
-						escape = '~'
+						escape = '\?'
 						
 						a = r'('+escape+r'*)' + start + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + start + r'|$)'
 						b = r'('+escape+r'*)' + start+group + r'((?:[^'+group+escape+r']|'+escape*2+r'|'+escape+group+r')*?)' + group
