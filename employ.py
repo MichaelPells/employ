@@ -360,7 +360,7 @@ class employ:
 						a = r'('+escape+r'*)' + pstart + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pstart + r'|$)'
 						b = r'('+escape+r'*)' + pstart+pgroup + r'((?:[^'+pgroup+escape+r']|'+escape*2+r'|'+escape+pgroup+r')*?)' + pgroup
 						
-						pattern = r'('+escape+r'*)' + pstart + r'(' + pgroup + r'((?:[^'+pgroup+escape+r']|'+escape*2+r'|'+escape+pgroup+r')*?)' + pgroup + r'|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pstart + r'|$))'
+						pattern = r'('+escape+r'*)' + pstart + r'(' + pgroup + r'((?:[^'+pgroup+escape+r']|'+escape*2+r'|'+escape+pgroup+r')*?)' + pgroup + r'|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pstart + r'|\?|$))'
 						patternAnyTypeUngrouped = r'^' + pstart + r'([a-zA-Z_][a-zA-Z0-9_]*)$'
 						patternAnyTypeGrouped = r'^' + pstart+pgroup + r'((?:[^'+pgroup+escape+r']|'+escape*2+r'|'+escape+pgroup+r')*?)' + pgroup+r'$'
 
