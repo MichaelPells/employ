@@ -1,6 +1,6 @@
 {
     "a": [
-        "hello", 2, null, "hi", ["who"]
+        "hello$yz", 2, null, "hi", ["who"]
     ],
     "b": "hello",
     "null": null,
@@ -10,7 +10,7 @@
     "c": {
         "x": 1,
         "y": "?~2+4~ my boy ~yz hi ~yz",
-        "y1": "??$`2+4` my boy $yz hi $yz",
+        "y1": "??$`2+4` my boy @a $yz hi $yz",
         "z": ["a", "b"]
     }
 }

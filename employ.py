@@ -347,31 +347,43 @@ class employ:
 						(r'(~*)\$(`((?:[^`~]|~~|~`)*?)`|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$))')
 						(r'^\$([a-zA-Z_][a-zA-Z0-9_]*)$')
 						(r'^\$`((?:[^`~]|~~|~`)*?)`$')
-						
-						start = '\$'
-						group = '`'
+
+						(r"(~*)@('((?:[^'~]|~~|~')*?)'|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|@|$))")
+
+						pstart = '\$'
+						pgroup = '`'
+						jstart = "@"
+						jgroup = "'"
 						escape = '\?'
 						escape_ = '?'
 						
-						a = r'('+escape+r'*)' + start + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + start + r'|$)'
-						b = r'('+escape+r'*)' + start+group + r'((?:[^'+group+escape+r']|'+escape*2+r'|'+escape+group+r')*?)' + group
+						a = r'('+escape+r'*)' + pstart + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pstart + r'|$)'
+						b = r'('+escape+r'*)' + pstart+pgroup + r'((?:[^'+pgroup+escape+r']|'+escape*2+r'|'+escape+pgroup+r')*?)' + pgroup
 						
-						pattern = r'('+escape+r'*)' + start + r'(' + group + r'((?:[^'+group+escape+r']|'+escape*2+r'|'+escape+group+r')*?)' + group + r'|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + start + r'|$))'
-						patternAnyTypeUngrouped = r'^' + start + r'([a-zA-Z_][a-zA-Z0-9_]*)$'
-						patternAnyTypeGrouped = r'^' + start+group + r'((?:[^'+group+escape+r']|'+escape*2+r'|'+escape+group+r')*?)' + group+r'$'
+						pattern = r'('+escape+r'*)' + pstart + r'(' + pgroup + r'((?:[^'+pgroup+escape+r']|'+escape*2+r'|'+escape+pgroup+r')*?)' + pgroup + r'|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pstart + r'|$))'
+						patternAnyTypeUngrouped = r'^' + pstart + r'([a-zA-Z_][a-zA-Z0-9_]*)$'
+						patternAnyTypeGrouped = r'^' + pstart+pgroup + r'((?:[^'+pgroup+escape+r']|'+escape*2+r'|'+escape+pgroup+r')*?)' + pgroup+r'$'
 
 						@staticmethod
-						def process(value):
+						def process(value, key, container):
 							if isinstance(value, str):
-								return interpreter.processor(value)
+								container[key] = interpreter.processor(value)
 
-							if isinstance(value, list):
-								return [interpreter.process(item) for item in value]
+							elif isinstance(value, list):
+								container[key] = []
 
-							if isinstance(value, dict):
-								return {interpreter.process(key): interpreter.process(val) for key, val in value.items()}
+								for i, v in enumerate(value):
+									container[key].append(None)
+									interpreter.process(v, i, container[key])
 
-							return value
+							elif isinstance(value, dict):
+								container[key] = {}
+
+								for k, v in value.items():
+									interpreter.process(v, k, container[key])
+
+							else:
+								container[key] = value
 
 						@staticmethod
 						def processor(value):
@@ -441,7 +453,7 @@ class employ:
 									return f"{result}"
 
 						def interpret(s):
-							s.expression = s.expression.replace(s.escape_+s.group, s.group).replace(s.escape_*2, s.escape_)
+							s.expression = s.expression.replace(s.escape_+s.pgroup, s.pgroup).replace(s.escape_*2, s.escape_)
 
 							return s.evaluate()
 
@@ -455,7 +467,15 @@ class employ:
 						def evaluate(s):
 							return eval(s.expression, __global__)			
 
-					data = interpreter.process(employ.__deps__.json.loads(__script__))
+					data = employ.__deps__.json.loads(__script__)
+
+					container = {
+						"data": None
+					}
+
+					interpreter.process(data, "data", container)
+
+					data = container["data"]
 
 				if not __isdir__ and "only" in __params__:
 				# Perform selective addition of variables from the new environment to the old environment, based on the `only` parameter.
