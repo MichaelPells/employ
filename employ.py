@@ -360,17 +360,21 @@ class employ:
 						a = r'('+escape+r'*)' + pystart + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pystart + r'|$)'
 						b = r'('+escape+r'*)' + pystart+pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup
 
-						patternGrouped = pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup
-						patternUngrouped = r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pystart + r'|'+ escape +r'|$)'
-						ppattern = pystart + r'(' + patternGrouped + r'|'+ patternUngrouped + r')'
+						pyPatternGrouped = pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup
+						pyPatternUngrouped = r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pystart + r'|'+ escape +r'|$)'
+						pyPattern = pystart + r'(' + pyPatternGrouped + r'|'+ pyPatternUngrouped + r')'
 
-						jpattern = r"@('((?:[^'\?]|\?\?|\?')*?)'|([a-zA-Z0-9_>]*)(?=\s|@|$))"
+						objPattern = r"@('((?:[^'\?]|\?\?|\?')*?)'|([a-zA-Z0-9_>]*)(?=\s|@|$))"
 
-						pattern = r'('+escape+r'*)((' + ppattern + r')|(' + jpattern + r'))'
+						pattern = r'('+escape+r'*)((' + pyPattern + r')|(' + objPattern + r'))'
 
-						patternAnyTypeUngrouped = r'^' + pystart + r'([a-zA-Z_][a-zA-Z0-9_]*)$'
-						patternAnyTypeGrouped = r'^' + pystart+pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup+r'$'
+						pyPatternAnyTypeUngrouped = r'^' + pystart + r'([a-zA-Z_][a-zA-Z0-9_]*)$'
+						pyPatternAnyTypeGrouped = r'^' + pystart+pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup+r'$'
 
+						objPatternAnyTypeUngrouped = r'^@([a-zA-Z0-9_>]*)$'
+						objPatternAnyTypeGrouped = r"^@'((?:[^'\?]|\?\?|\?')*?)'$"
+						objPatternAnyType = r"^@('((?:[^'\?]|\?\?|\?')*?)'|([a-zA-Z0-9_>]*))$"
+ 
 						@staticmethod
 						def process(value, key, container):
 							if isinstance(value, str):
@@ -396,21 +400,17 @@ class employ:
 						def processor(value):
 							i = interpreter
 
-							match = employ.__deps__.re.search(i.patternAnyTypeUngrouped, value)
+							match = employ.__deps__.re.search(i.pyPatternAnyTypeUngrouped, value)
 							if match:
-								return interpreter().interpretATUG(match)
+								return interpreter().pyInterpretATUG(match)
 						
-							match = employ.__deps__.re.search(i.patternAnyTypeGrouped, value)
+							match = employ.__deps__.re.search(i.pyPatternAnyTypeGrouped, value)
 							if match:
-								return interpreter().interpretATG(match)
+								return interpreter().pyInterpretATG(match)
 
-							match = employ.__deps__.re.search(i.patternAnyTypeUngrouped, value)
+							match = employ.__deps__.re.search(i.objPatternAnyType, value)
 							if match:
-								return interpreter().interpretATUG(match)
-						
-							match = employ.__deps__.re.search(i.patternAnyTypeGrouped, value)
-							if match:
-								return interpreter().interpretATG(match)
+								return interpreter().objInterpretAT(match)
 						
 							return employ.__deps__.re.sub(i.pattern, i.interpreter, value)
 
@@ -422,7 +422,7 @@ class employ:
 						def __init__(s):
 							s.valid = True
 
-						def interpretATUG(s, match):
+						def pyInterpretATUG(s, match):
 							s.code = match.group()
 							s.expression = match.group(1)
 							
@@ -432,11 +432,28 @@ class employ:
 								s.valid = False
 								return s.code
 
-						def interpretATG(s, match):
+						def pyInterpretATG(s, match):
 							s.code = match.group()
 							s.expression = match.group(1)
 					
 							return s.interpret()
+
+						def objInterpretAT(s, match):
+							print(list(enumerate(match.groups(), 1)))
+							s.code = match.group()
+							s.expression = match.group(2) or match.group(3)
+
+							try:
+								return container["data"][s.expression]
+							except (KeyError, IndexError):
+								try:
+									identity = id(data[s.expression])
+									queue[identity] = ...
+							
+									return "UNPROCESSED"
+								except (KeyError, IndexError):
+									s.valid = False
+									return s.code
 
 						def interprets(s, match):
 							s.code = match.group()
