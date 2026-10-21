@@ -354,6 +354,7 @@ class employ:
 						pygroup = '`'
 						objstart = "@"
 						objgroup = "'"
+						objsub = ">"
 						escape = '\?'
 						escape_ = '?'
 						
@@ -377,13 +378,11 @@ class employ:
  
 						@staticmethod
 						def processor(value, key, container):
+							obj = interpreter(value, key, container)
+
 							if isinstance(value, str):
-								object = interpreter(value, key, container)
-								object.process()
-
-								container[key] = object.result
-
-								object.checkresolved()
+								obj.process()
+								container[key] = obj.result
 
 							elif isinstance(value, list):
 								container[key] = []
@@ -401,23 +400,23 @@ class employ:
 							else:
 								container[key] = value
 
+							obj.checkresolved()
+
 						@staticmethod
 						def resolve():
 							i = 0
+							while len(queue):
+								print(resolved)
+								reference = resolved[i]
+								print(resolved)
+								citations = queue[reference]
 
-							while True:
-								try:
-									reference = resolved[i]
-									citations = queue[reference]
+								for citation in citations:
+									value, key, container = citation.ref[0], citation.ref[1], citation.ref[2]
+									interpreter.processor(value, key, container)
 
-									for citation in citations:
-										value, key, container = citation.ref[0], citation.ref[1], citation.ref[2]
-										interpreter.processor(value, key, container)
-
-									del queue[reference]
-									i += 1
-								except IndexError:
-									break
+								del queue[reference]
+								i += 1
 
 						@staticmethod
 						class unresolved:
@@ -472,12 +471,12 @@ class employ:
 							s.expression = match.group(2) or match.group(3)
 
 							try:
-								result = dataobject["data"][s.expression]
+								result = s.trace(dataobject["data"])
 
 								if not isinstance(result, interpreter.unresolved):
 									s.result = result
 								else:
-									identity = id(data[s.expression])
+									identity = id(s.trace(data))
 									if identity not in queue:
 										queue[identity] = []
 									queue[identity].append(s)
@@ -485,7 +484,7 @@ class employ:
 									s.result = interpreter.unresolved()
 							except (KeyError, IndexError):
 								try:
-									identity = id(data[s.expression])
+									identity = id(s.trace(data))
 									if identity not in queue:
 										queue[identity] = []
 									queue[identity].append(s)
@@ -579,6 +578,17 @@ class employ:
 
 						def evaluate(s):
 							return eval(s.expression, __global__)
+
+						def trace(s, source):
+							track = s.expression.split(s.objsub)
+
+							for key in track:
+								if isinstance(source, list):
+									key = int(key)
+
+								source = source[key]
+
+							return source
 
 						def checkresolved(s):
 							value, key, container = s.ref[0], s.ref[1], s.ref[2]
