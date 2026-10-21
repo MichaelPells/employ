@@ -30,6 +30,7 @@ from employ import *
 
 cas = employ("jsondata", res={"xy": "Yesssss", "yz": [1,2]})
 print(cas.data)
+# print(cas.queue)
 # cas.helloworld()
 # cas.__thread__.join()
 # cas.__univ__.t = False

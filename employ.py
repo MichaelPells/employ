@@ -360,13 +360,13 @@ class employ:
 						a = r'('+escape+r'*)' + pystart + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pystart + r'|$)'
 						b = r'('+escape+r'*)' + pystart+pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup
 
-						pyPatternGrouped = pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup
-						pyPatternUngrouped = r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pystart + r'|'+ escape +r'|$)'
-						pyPattern = pystart + r'(' + pyPatternGrouped + r'|'+ pyPatternUngrouped + r')'
+						pyPatternStringGrouped = pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup
+						pyPatternStringUngrouped = r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pystart + r'|'+ escape +r'|$)'
+						pyPatternString = pystart + r'(' + pyPatternStringGrouped + r'|'+ pyPatternStringUngrouped + r')'
 
-						objPattern = r"@('((?:[^'\?]|\?\?|\?')*?)'|([a-zA-Z0-9_>]*)(?=\s|@|$))"
+						objPatternString = r"@('((?:[^'\?]|\?\?|\?')*?)'|([a-zA-Z0-9_>]*)(?=\s|@|$))"
 
-						pattern = r'('+escape+r'*)((' + pyPattern + r')|(' + objPattern + r'))'
+						allPatternString = r'('+escape+r'*)((' + pyPatternString + r')|(' + objPatternString + r'))'
 
 						pyPatternAnyTypeUngrouped = r'^' + pystart + r'([a-zA-Z_][a-zA-Z0-9_]*)$'
 						pyPatternAnyTypeGrouped = r'^' + pystart+pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup+r'$'
@@ -378,7 +378,8 @@ class employ:
 						@staticmethod
 						def process(value, key, container):
 							if isinstance(value, str):
-								container[key] = interpreter.processor(value)
+								object = interpreter(value, key, container)
+								container[key] = interpreter.processor(object)
 
 							elif isinstance(value, list):
 								container[key] = []
@@ -397,30 +398,31 @@ class employ:
 								container[key] = value
 
 						@staticmethod
-						def processor(value):
-							i = interpreter
+						def processor(object):
+							value = object.ref[0]
 
-							match = employ.__deps__.re.search(i.pyPatternAnyTypeUngrouped, value)
+							match = employ.__deps__.re.search(interpreter.pyPatternAnyTypeUngrouped, value)
 							if match:
-								return interpreter().pyInterpretATUG(match)
-						
-							match = employ.__deps__.re.search(i.pyPatternAnyTypeGrouped, value)
+								return object.pyInterpretATUG(match)
+
+							match = employ.__deps__.re.search(interpreter.pyPatternAnyTypeGrouped, value)
 							if match:
-								return interpreter().pyInterpretATG(match)
+								return object.pyInterpretATG(match)
 
-							match = employ.__deps__.re.search(i.objPatternAnyType, value)
+							match = employ.__deps__.re.search(interpreter.objPatternAnyType, value)
 							if match:
-								return interpreter().objInterpretAT(match)
-						
-							return employ.__deps__.re.sub(i.pattern, i.interpreter, value)
+								return object.objInterpretAT(match)
 
-						@staticmethod
-						def interpreter(match):
-							return interpreter().interprets(match)
+							return employ.__deps__.re.sub(interpreter.allPatternString, object.interpretS, value)
 
 
-						def __init__(s):
+						def __init__(s, value, key, container):
+							s.ref = value, key, container
+
 							s.valid = True
+
+						def reset(s):
+							s = interpreter(*s.ref)
 
 						def pyInterpretATUG(s, match):
 							s.code = match.group()
@@ -448,14 +450,17 @@ class employ:
 							except (KeyError, IndexError):
 								try:
 									identity = id(data[s.expression])
-									queue[identity] = ...
-							
+									if identity not in queue:
+										queue[identity] = []
+									queue[identity].append(s.ref)
+
 									return "UNPROCESSED"
 								except (KeyError, IndexError):
 									s.valid = False
 									return s.code
 
-						def interprets(s, match):
+						def interpretS(s, match):
+							s.reset()
 							s.code = match.group()
 							s.pre = match.group(1)
 
@@ -468,7 +473,7 @@ class employ:
 									s.pre = s.pre.replace(s.escape_*2, s.escape_)
 						
 									s.expression = match.group(5)
-						
+
 									return f"{s.pre}{s.interpret()}"
 								else:
 									s.expression = match.group(6)
