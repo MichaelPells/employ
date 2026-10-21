@@ -376,45 +376,52 @@ class employ:
 						objPatternAnyType = r"^@('((?:[^'\?]|\?\?|\?')*?)'|([a-zA-Z0-9_>]*))$"
  
 						@staticmethod
-						def process(value, key, container):
+						def processor(value, key, container):
 							if isinstance(value, str):
 								object = interpreter(value, key, container)
-								container[key] = interpreter.processor(object)
+								object.process()
+
+								container[key] = object.result
+
+								object.checkresolved()
 
 							elif isinstance(value, list):
 								container[key] = []
 
 								for i, v in enumerate(value):
 									container[key].append(None)
-									interpreter.process(v, i, container[key])
+									interpreter.processor(v, i, container[key])
 
 							elif isinstance(value, dict):
 								container[key] = {}
 
 								for k, v in value.items():
-									interpreter.process(v, k, container[key])
+									interpreter.processor(v, k, container[key])
 
 							else:
 								container[key] = value
 
 						@staticmethod
-						def processor(object):
-							value = object.ref[0]
+						def resolve():
+							i = 0
 
-							match = employ.__deps__.re.search(interpreter.pyPatternAnyTypeUngrouped, value)
-							if match:
-								return object.pyInterpretATUG(match)
+							while True:
+								try:
+									reference = resolved[i]
+									citations = queue[reference]
 
-							match = employ.__deps__.re.search(interpreter.pyPatternAnyTypeGrouped, value)
-							if match:
-								return object.pyInterpretATG(match)
+									for citation in citations:
+										value, key, container = citation.ref[0], citation.ref[1], citation.ref[2]
+										interpreter.processor(value, key, container)
 
-							match = employ.__deps__.re.search(interpreter.objPatternAnyType, value)
-							if match:
-								return object.objInterpretAT(match)
+									del queue[reference]
+									i += 1
+								except IndexError:
+									break
 
-							return employ.__deps__.re.sub(interpreter.allPatternString, object.interpretS, value)
-
+						@staticmethod
+						class unresolved:
+							pass
 
 						def __init__(s, value, key, container):
 							s.ref = value, key, container
@@ -424,43 +431,73 @@ class employ:
 						def reset(s):
 							s = interpreter(*s.ref)
 
+						def process(s):
+							value = s.ref[0]
+
+							match = employ.__deps__.re.search(interpreter.pyPatternAnyTypeUngrouped, value)
+							if match:
+								s.pyInterpretATUG(match)
+								return
+
+							match = employ.__deps__.re.search(interpreter.pyPatternAnyTypeGrouped, value)
+							if match:
+								s.pyInterpretATG(match)
+								return
+
+							match = employ.__deps__.re.search(interpreter.objPatternAnyType, value)
+							if match:
+								s.objInterpretAT(match)
+								return
+
+							s.result = employ.__deps__.re.sub(interpreter.allPatternString, s.interprets, value)
+
 						def pyInterpretATUG(s, match):
 							s.code = match.group()
 							s.expression = match.group(1)
 							
 							try:
-								return s.evaluate()
+								s.result = s.evaluate()
 							except NameError:
 								s.valid = False
-								return s.code
+								s.result = s.code
 
 						def pyInterpretATG(s, match):
 							s.code = match.group()
 							s.expression = match.group(1)
 					
-							return s.interpret()
+							s.result = s.interpret()
 
 						def objInterpretAT(s, match):
-							print(list(enumerate(match.groups(), 1)))
 							s.code = match.group()
 							s.expression = match.group(2) or match.group(3)
 
 							try:
-								return container["data"][s.expression]
+								result = dataobject["data"][s.expression]
+
+								if not isinstance(result, interpreter.unresolved):
+									s.result = result
+								else:
+									identity = id(data[s.expression])
+									if identity not in queue:
+										queue[identity] = []
+									queue[identity].append(s)
+
+									s.result = interpreter.unresolved()
 							except (KeyError, IndexError):
 								try:
 									identity = id(data[s.expression])
 									if identity not in queue:
 										queue[identity] = []
-									queue[identity].append(s.ref)
+									queue[identity].append(s)
 
-									return "UNPROCESSED"
+									s.result = interpreter.unresolved()
 								except (KeyError, IndexError):
 									s.valid = False
-									return s.code
+									s.result = s.code
 
-						def interpretS(s, match):
+						def interprets(s, match):
 							s.reset()
+
 							s.code = match.group()
 							s.pre = match.group(1)
 
@@ -529,7 +566,7 @@ class employ:
 
 						def find(s):
 							try:
-								return container["data"][s.expression]
+								return dataobject["data"][s.expression]
 							except (KeyError, IndexError):
 								try:
 									identity = id(data[s.expression])
@@ -539,21 +576,32 @@ class employ:
 								except (KeyError, IndexError):
 									s.valid = False
 									return s.code
-			
+
 						def evaluate(s):
-							return eval(s.expression, __global__)			
+							return eval(s.expression, __global__)
+
+						def checkresolved(s):
+							value, key, container = s.ref[0], s.ref[1], s.ref[2]
+
+							if not isinstance(container[key], interpreter.unresolved):
+								identity = id(value)
+
+								if identity in queue:
+									resolved.append(identity)
 
 					data = employ.__deps__.json.loads(__script__)
 
-					container = {
+					dataobject = {
 						"data": None
 					}
 
 					queue = {}
+					resolved = []
 
-					interpreter.process(data, "data", container)
+					interpreter.processor(data, "data", dataobject)
+					interpreter.resolve()
 
-					data = container["data"]
+					data = dataobject["data"]
 
 				if not __isdir__ and "only" in __params__:
 				# Perform selective addition of variables from the new environment to the old environment, based on the `only` parameter.
