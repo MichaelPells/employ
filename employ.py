@@ -348,21 +348,28 @@ class employ:
 						(r'^\$([a-zA-Z_][a-zA-Z0-9_]*)$')
 						(r'^\$`((?:[^`~]|~~|~`)*?)`$')
 
-						(r"(~*)@('((?:[^'~]|~~|~')*?)'|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|@|$))")
+						(r"(~*)@('((?:[^'~]|~~|~')*?)'|([a-zA-Z_][a-zA-Z0-9_]>*)(?=\s|@|$))")
 
-						pstart = '\$'
-						pgroup = '`'
-						jstart = "@"
-						jgroup = "'"
+						pystart = '\$'
+						pygroup = '`'
+						objstart = "@"
+						objgroup = "'"
 						escape = '\?'
 						escape_ = '?'
 						
-						a = r'('+escape+r'*)' + pstart + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pstart + r'|$)'
-						b = r'('+escape+r'*)' + pstart+pgroup + r'((?:[^'+pgroup+escape+r']|'+escape*2+r'|'+escape+pgroup+r')*?)' + pgroup
-						
-						pattern = r'('+escape+r'*)' + pstart + r'(' + pgroup + r'((?:[^'+pgroup+escape+r']|'+escape*2+r'|'+escape+pgroup+r')*?)' + pgroup + r'|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pstart + r'|\?|$))'
-						patternAnyTypeUngrouped = r'^' + pstart + r'([a-zA-Z_][a-zA-Z0-9_]*)$'
-						patternAnyTypeGrouped = r'^' + pstart+pgroup + r'((?:[^'+pgroup+escape+r']|'+escape*2+r'|'+escape+pgroup+r')*?)' + pgroup+r'$'
+						a = r'('+escape+r'*)' + pystart + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pystart + r'|$)'
+						b = r'('+escape+r'*)' + pystart+pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup
+
+						patternGrouped = pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup
+						patternUngrouped = r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pystart + r'|'+ escape +r'|$)'
+						ppattern = pystart + r'(' + patternGrouped + r'|'+ patternUngrouped + r')'
+
+						jpattern = r"@('((?:[^'\?]|\?\?|\?')*?)'|([a-zA-Z0-9_>]*)(?=\s|@|$))"
+
+						pattern = r'('+escape+r'*)((' + ppattern + r')|(' + jpattern + r'))'
+
+						patternAnyTypeUngrouped = r'^' + pystart + r'([a-zA-Z_][a-zA-Z0-9_]*)$'
+						patternAnyTypeGrouped = r'^' + pystart+pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup+r'$'
 
 						@staticmethod
 						def process(value, key, container):
@@ -388,6 +395,14 @@ class employ:
 						@staticmethod
 						def processor(value):
 							i = interpreter
+
+							match = employ.__deps__.re.search(i.patternAnyTypeUngrouped, value)
+							if match:
+								return interpreter().interpretATUG(match)
+						
+							match = employ.__deps__.re.search(i.patternAnyTypeGrouped, value)
+							if match:
+								return interpreter().interpretATG(match)
 
 							match = employ.__deps__.re.search(i.patternAnyTypeUngrouped, value)
 							if match:
@@ -426,34 +441,60 @@ class employ:
 						def interprets(s, match):
 							s.code = match.group()
 							s.pre = match.group(1)
-					
+
 							if match.group(3):
-								if len(s.pre) % 2 == 1:
-									s.valid = False
-									return s.code[1:]
-					
-								s.pre = s.pre.replace(s.escape_*2, s.escape_)
-					
-								s.expression = match.group(3)
-					
-								return f"{s.pre}{s.interpret()}"
-							else:
-								s.expression = match.group(4)
-								result = s.retrieve()
-					
-								if s.valid:
+								if match.group(5):
 									if len(s.pre) % 2 == 1:
 										s.valid = False
 										return s.code[1:]
-					
+						
 									s.pre = s.pre.replace(s.escape_*2, s.escape_)
-					
-									return f"{s.pre}{result}"
+						
+									s.expression = match.group(5)
+						
+									return f"{s.pre}{s.interpret()}"
 								else:
-									return f"{result}"
+									s.expression = match.group(6)
+									result = s.retrieve()
+						
+									if s.valid:
+										if len(s.pre) % 2 == 1:
+											s.valid = False
+											return s.code[1:]
+						
+										s.pre = s.pre.replace(s.escape_*2, s.escape_)
+						
+										return f"{s.pre}{result}"
+									else:
+										return f"{result}"
+							elif match.group(7):
+								if match.group(9):
+									if len(s.pre) % 2 == 1:
+										s.valid = False
+										return s.code[1:]
+								
+									s.pre = s.pre.replace(s.escape_*2, s.escape_)
+								
+									s.expression = match.group(9)
+
+									return f"{s.pre}{s.interpret()}"
+								else:
+									s.expression = match.group(10)
+									result = s.find()
+								
+									if s.valid:
+										if len(s.pre) % 2 == 1:
+											s.valid = False
+											return s.code[1:]
+								
+										s.pre = s.pre.replace(s.escape_*2, s.escape_)
+								
+										return f"{s.pre}{result}"
+									else:
+										return f"{result}"
 
 						def interpret(s):
-							s.expression = s.expression.replace(s.escape_+s.pgroup, s.pgroup).replace(s.escape_*2, s.escape_)
+							s.expression = s.expression.replace(s.escape_+s.pygroup, s.pygroup).replace(s.escape_*2, s.escape_)
 
 							return s.evaluate()
 
@@ -463,6 +504,19 @@ class employ:
 							except NameError:
 								s.valid = False
 								return s.code
+
+						def find(s):
+							try:
+								return container["data"][s.expression]
+							except (KeyError, IndexError):
+								try:
+									identity = id(data[s.expression])
+									queue[identity] = ...
+
+									return "UNPROCESSED"
+								except (KeyError, IndexError):
+									s.valid = False
+									return s.code
 			
 						def evaluate(s):
 							return eval(s.expression, __global__)			
@@ -472,6 +526,8 @@ class employ:
 					container = {
 						"data": None
 					}
+
+					queue = {}
 
 					interpreter.process(data, "data", container)
 
