@@ -406,9 +406,7 @@ class employ:
 						def resolve():
 							i = 0
 							while len(queue):
-								print(resolved)
 								reference = resolved[i]
-								print(resolved)
 								citations = queue[reference]
 
 								for citation in citations:
@@ -535,7 +533,7 @@ class employ:
 								
 									s.expression = match.group(9)
 
-									return f"{s.pre}{s.interpret()}"
+									return f"{s.pre}{s.find()}"
 								else:
 									s.expression = match.group(10)
 									result = s.find()
@@ -552,7 +550,7 @@ class employ:
 										return f"{result}"
 
 						def interpret(s):
-							s.expression = s.expression.replace(s.escape_+s.pygroup, s.pygroup).replace(s.escape_*2, s.escape_)
+							s.expression = s.expression.replace(s.escape_+s.pygroup, s.pygroup).replace(s.escape_*2, s.escape_) # ISSUE: Do same for @ references
 
 							return s.evaluate()
 
