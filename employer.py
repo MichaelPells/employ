@@ -60,69 +60,15 @@ print(cas.queue)
 
 
 
-import json
-import re
+# import re
 
-# def interpret(match):
-#     code = match.group(0)[2:-1]
+# text = "Hello Bello"
 
-#     return str(eval(code, res))
+# def edit(match: re.Match):
+#     value = match.group()
+#     print(match.start())
+#     return value[:3]
 
-# def process(value):
-#     if isinstance(value, str):
-#         return re.sub(r'\$\{[^}]*\}', interpret, value)
+# newtext = re.sub(r'[A-Z]ello', edit, text)
 
-#     if isinstance(value, list):
-#         return [process(item) for item in value]
-
-#     if isinstance(value, dict):
-#         return {process(key): process(val) for key, val in value.items()}
-
-#     return value
-
-# res = {
-#     'x': 1,
-#     'y': [1,2]
-# }
-
-# data = '''
-# {
-#     "a": [
-#         "hello", 2, null, "hi", ["who"]
-#     ],
-#     "b": "hello",
-#     "null": null,
-#     "2": {},
-#     "c": {
-#         "x": 1,
-#         "y": "${2+4} my boy ${y[1]}",
-#         "z": ["a", "b"]
-#     }
-# }
-# '''
-
-# result = process(json.loads(data, object_hook=process))
-
-# print(result)
-
-# (r'(~*)\$([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$)')
-# (r'(~*)\$`((?:[^`~]|~~|~`)*?)`')
-
-# (r'(~*)\$([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$)')
-# pattern = r'(~*)\$(`((?:[^`~]|~~|~`)*?)`|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$))'
-
-# text = "~~$`'2+4~~$ab '` my boy $bc hi $de"
-
-# def changer(match: re.Match):
-#     print(f"{list(enumerate(match.groups(), start=1))}    --->   {match.group(4)}")
-#     print()
-#     return match.group()
-
-# newtext = re.sub(pattern, changer, text)
 # print(newtext)
-
-# [(1, '~~'), (2, "`'2+4~~$ab '`"), (3, "'2+4~~$ab '"), (4, None)] # 1, 3
-
-# [(1, ''), (2, 'bc'), (3, None), (4, 'bc')] # 1, 4
-
-# [(1, ''), (2, 'de'), (3, None), (4, 'de')]

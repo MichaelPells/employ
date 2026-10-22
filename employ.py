@@ -468,29 +468,7 @@ class employ:
 							s.code = match.group()
 							s.expression = match.group(2) or match.group(3)
 
-							try:
-								result = s.trace(dataobject["data"])
-
-								if not isinstance(result, interpreter.unresolved):
-									s.result = result
-								else:
-									identity = id(s.trace(data))
-									if identity not in queue:
-										queue[identity] = []
-									queue[identity].append(s)
-
-									s.result = interpreter.unresolved()
-							except (KeyError, IndexError):
-								try:
-									identity = id(s.trace(data))
-									if identity not in queue:
-										queue[identity] = []
-									queue[identity].append(s)
-
-									s.result = interpreter.unresolved()
-								except (KeyError, IndexError):
-									s.valid = False
-									s.result = s.code
+							s.result = s.find()
 
 						def interprets(s, match):
 							s.reset()
@@ -524,30 +502,19 @@ class employ:
 									else:
 										return f"{result}"
 							elif match.group(7):
-								if match.group(9):
+								s.expression = match.group(9) or match.group(10)
+								result = s.find()
+
+								if s.valid:
 									if len(s.pre) % 2 == 1:
 										s.valid = False
 										return s.code[1:]
-								
+							
 									s.pre = s.pre.replace(s.escape_*2, s.escape_)
-								
-									s.expression = match.group(9)
 
-									return f"{s.pre}{s.find()}"
+									return f"{s.pre}{result}"
 								else:
-									s.expression = match.group(10)
-									result = s.find()
-								
-									if s.valid:
-										if len(s.pre) % 2 == 1:
-											s.valid = False
-											return s.code[1:]
-								
-										s.pre = s.pre.replace(s.escape_*2, s.escape_)
-								
-										return f"{s.pre}{result}"
-									else:
-										return f"{result}"
+									return f"{result}"
 
 						def interpret(s):
 							s.expression = s.expression.replace(s.escape_+s.pygroup, s.pygroup).replace(s.escape_*2, s.escape_) # ISSUE: Do same for @ references
@@ -562,14 +529,28 @@ class employ:
 								return s.code
 
 						def find(s):
+							s.expression = s.expression.replace(s.escape_+s.objgroup, s.objgroup).replace(s.escape_*2, s.escape_)
+
 							try:
-								return dataobject["data"][s.expression]
+								result = s.trace(dataobject["data"])
+						
+								if not isinstance(result, interpreter.unresolved):
+									return result
+								else:
+									identity = id(s.trace(data))
+									if identity not in queue:
+										queue[identity] = []
+									queue[identity].append(s)
+						
+									return interpreter.unresolved()
 							except (KeyError, IndexError):
 								try:
-									identity = id(data[s.expression])
-									queue[identity] = ...
-
-									return "UNPROCESSED"
+									identity = id(s.trace(data))
+									if identity not in queue:
+										queue[identity] = []
+									queue[identity].append(s)
+						
+									return interpreter.unresolved()
 								except (KeyError, IndexError):
 									s.valid = False
 									return s.code
