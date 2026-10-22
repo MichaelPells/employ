@@ -543,7 +543,7 @@ class employ:
 									queue[identity].append(s)
 						
 									return interpreter.unresolved()
-							except (KeyError, IndexError):
+							except (KeyError, IndexError, ValueError):
 								try:
 									identity = id(s.trace(data))
 									if identity not in queue:
@@ -551,7 +551,7 @@ class employ:
 									queue[identity].append(s)
 						
 									return interpreter.unresolved()
-								except (KeyError, IndexError):
+								except (KeyError, IndexError, ValueError):
 									s.valid = False
 									return s.code
 
