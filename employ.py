@@ -365,7 +365,7 @@ class employ:
 						pyPatternStringUngrouped = r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pystart + r'|'+ escape +r'|$)'
 						pyPatternString = pystart + r'(' + pyPatternStringGrouped + r'|'+ pyPatternStringUngrouped + r')'
 
-						objPatternString = r"@('((?:[^'\?]|\?\?|\?')*?)'|([a-zA-Z0-9_>]*)(?=\s|@|$))"
+						objPatternString = r"@('((?:[^'\?]|\?\?|\?'|\?>)*?)'|([a-zA-Z0-9_>]*)(?=\s|@|$))"
 
 						allPatternString = r'('+escape+r'*)((' + pyPatternString + r')|(' + objPatternString + r'))'
 
@@ -373,8 +373,8 @@ class employ:
 						pyPatternAnyTypeGrouped = r'^' + pystart+pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup+r'$'
 
 						objPatternAnyTypeUngrouped = r'^@([a-zA-Z0-9_>]*)$'
-						objPatternAnyTypeGrouped = r"^@'((?:[^'\?]|\?\?|\?')*?)'$"
-						objPatternAnyType = r"^@('((?:[^'\?]|\?\?|\?')*?)'|([a-zA-Z0-9_>]*))$"
+						objPatternAnyTypeGrouped = r"^@'((?:[^'\?]|\?\?|\?'|\?>)*?)'$"
+						objPatternAnyType = r"^@('((?:[^'\?]|\?\?|\?'|\?>)*?)'|([a-zA-Z0-9_>]*))$"
  
 						@staticmethod
 						def processor(value, key, container):
@@ -529,11 +529,11 @@ class employ:
 								return s.code
 
 						def find(s):
-							s.expression = s.expression.replace(s.escape_+s.objgroup, s.objgroup).replace(s.escape_*2, s.escape_)
+							s.expression = s.expression.replace(s.escape_+s.objgroup, s.objgroup)
 
 							try:
 								result = s.trace(dataobject["data"])
-						
+
 								if not isinstance(result, interpreter.unresolved):
 									return result
 								else:
@@ -561,11 +561,22 @@ class employ:
 						def trace(s, source):
 							track = s.expression.split(s.objsub)
 
-							for key in track:
+							key = ""
+
+							for n in range(len(track)):
+								if len(employ.__deps__.re.search(s.escape + r'*$', track[n]).group()) % 2 == 1 and n + 1 < len(track):
+									key += track[n] + s.objsub
+									continue
+
+								key += track[n]
+								key = key.replace(s.escape_+s.objsub, s.objsub).replace(s.escape_*2, s.escape_)
+
 								if isinstance(source, list):
 									key = int(key)
 
 								source = source[key]
+
+								key = ""
 
 							return source
 

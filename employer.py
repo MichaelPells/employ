@@ -60,15 +60,12 @@ print(cas.queue)
 
 
 
-# import re
+import re
 
-# text = "Hello Bello"
+# text = "c??>>x"
 
-# def edit(match: re.Match):
-#     value = match.group()
-#     print(match.start())
-#     return value[:3]
+# p = r'(?<!\?)(?:\?\?)*>'
 
-# newtext = re.sub(r'[A-Z]ello', edit, text)
+# res = re.split(p, text)
 
-# print(newtext)
+# print(res)
