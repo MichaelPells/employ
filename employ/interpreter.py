@@ -44,7 +44,8 @@ class Interpreter:
 
     @staticmethod
     class unresolved:
-        pass
+        def __init__(self, script=None):
+            self.script = script
 
     def __init__(self, data, refs=globals()):
         self.data = data
@@ -63,30 +64,35 @@ class Interpreter:
 
         return self.dataobject["data"]
 
-    def interpret(self, value, key, container):
-        obj = Script(value, key, container, self)
+    def interpret(self, value, key, container, reference=None):
+        try:
+            script = container[key].script
+            script.resume(reference)
+            container[key] = script.result
+        except:
+            script = Script(value, key, container, self)
 
-        if isinstance(value, str):
-            obj.process()
-            container[key] = obj.result
+            if isinstance(value, str):
+                script.process()
+                container[key] = script.result
 
-        elif isinstance(value, list):
-            container[key] = []
+            elif isinstance(value, list):
+                container[key] = []
 
-            for i, v in enumerate(value):
-                container[key].append(None)
-                self.interpret(v, i, container[key])
+                for i, v in enumerate(value):
+                    container[key].append(None)
+                    self.interpret(v, i, container[key])
 
-        elif isinstance(value, dict):
-            container[key] = {}
+            elif isinstance(value, dict):
+                container[key] = {}
 
-            for k, v in value.items():
-                self.interpret(v, k, container[key])
+                for k, v in value.items():
+                    self.interpret(v, k, container[key])
 
-        else:
-            container[key] = value
+            else:
+                container[key] = value
 
-        obj.checkresolved()
+        script.announceresolved()
 
     def resolve(self):
         i = 0
@@ -96,7 +102,7 @@ class Interpreter:
 
             for citation in citations:
                 value, key, container = citation.ref[0], citation.ref[1], citation.ref[2]
-                self.interpret(value, key, container)
+                self.interpret(value, key, container, reference)
 
             del self.queue[reference]
             i += 1
@@ -106,30 +112,63 @@ class Script:
         s.ref = value, key, container
         s.i = interpreter
 
-        s.valid = True
+        s.ATForms = [
+            s.pyInterpretATUG,
+            s.pyInterpretATG,
+            s.objInterpretAT
+            ]
+
+        s.parts = []
+        s.awaiting = {}
+        s.parsed = 0
+        s.match = None
+        s.reset()
 
     def reset(s):
-        s = Script(*s.ref, s.i)
+        s.valid = True
 
     def process(s):
         value = s.ref[0]
 
         match = re.search(s.i.pyPatternAnyTypeUngrouped, value)
         if match:
-            s.pyInterpretATUG(match)
+            s.route(match, 0)
             return
 
         match = re.search(s.i.pyPatternAnyTypeGrouped, value)
         if match:
-            s.pyInterpretATG(match)
+            s.route(match, 1)
             return
 
         match = re.search(s.i.objPatternAnyType, value)
         if match:
-            s.objInterpretAT(match)
+            s.route(match, 2)
             return
 
-        s.result = re.sub(s.i.allPatternString, s.interprets, value)
+        s.multiInterpretS()
+
+    def resume(s, reference):
+        if s.match: # ISSUE: Check how match (Match object) could be None.
+            s.route(s.match, s.form)
+        else:
+            targets = s.awaiting[reference]
+
+            for n in targets:
+                match = s.parts[n]
+                result = s.interpretS(match)
+
+                if not isinstance(result, s.i.unresolved):
+                    s.parts[n] = result
+
+            del s.awaiting[reference]
+            s.reset()
+
+            if not s.awaiting:
+                s.result = "".join(s.parts)
+
+    def route(s, match, form):
+        s.form = form
+        s.ATForms[form](match)
 
     def pyInterpretATUG(s, match):
         s.code = match.group()
@@ -153,9 +192,40 @@ class Script:
 
         s.result = s.find()
 
-    def interprets(s, match):
-        s.reset()
+        if isinstance(s.result, s.i.unresolved): # ISSUE: Yet to implement in py interpreters
+            s.match = match
 
+    def multiInterpretS(s):
+        value = s.ref[0]
+
+        for match in re.finditer(s.i.allPatternString, value):
+            skip = value[s.parsed:match.start()]
+            s.parts.append(skip)
+
+            result = s.interpretS(match)
+
+            if not isinstance(result, s.i.unresolved):
+                s.parts.append(result)
+            else:
+                s.parts.append(match)
+                identity = id(s.trace(s.i.data))
+                if identity not in s.awaiting:
+                    s.awaiting[identity] = []
+                s.awaiting[identity].append(len(s.parts) - 1)
+
+            s.parsed = match.end()
+
+            s.reset()
+
+        skip = value[s.parsed:]
+        s.parts.append(skip)
+
+        if not s.awaiting:
+            s.result = "".join(s.parts)
+        else:
+            s.result = s.i.unresolved(s)
+
+    def interpretS(s, match):
         s.code = match.group()
         s.pre = match.group(1)
 
@@ -192,6 +262,9 @@ class Script:
                 if len(s.pre) % 2 == 1:
                     s.valid = False
                     return s.code[1:]
+
+                if isinstance(result, s.i.unresolved):
+                    return result
         
                 s.pre = s.pre.replace(s.i.escape_*2, s.i.escape_)
 
@@ -223,9 +296,9 @@ class Script:
                 identity = id(s.trace(s.i.data))
                 if identity not in s.i.queue:
                     s.i.queue[identity] = []
-                s.i.queue[identity].append(s)
-    
-                return s.i.unresolved()
+                s.i.queue[identity].append(s) # ISSUE: Prevent multiple appends per listener
+
+                return s.i.unresolved(s)
         except (KeyError, IndexError, ValueError):
             try:
                 identity = id(s.trace(s.i.data))
@@ -233,7 +306,7 @@ class Script:
                     s.i.queue[identity] = []
                 s.i.queue[identity].append(s)
     
-                return s.i.unresolved()
+                return s.i.unresolved(s)
             except (KeyError, IndexError, ValueError):
                 s.valid = False
                 return s.code
@@ -263,7 +336,7 @@ class Script:
 
         return source
 
-    def checkresolved(s):
+    def announceresolved(s):
         value, key, container = s.ref[0], s.ref[1], s.ref[2]
 
         if not isinstance(container[key], s.i.unresolved):
