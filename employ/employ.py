@@ -1,38 +1,49 @@
-class employ:
+import sys
+import os
+import threading
+import requests
+import urllib.parse as parser
+import json
+import re
+from zipfile import ZipFile, Path
+
+from .interpreter import Interpreter
+
+class Employ:
 	"""
 	Make programmatic, dynamic, and robust import for local or remote Python module or library.
 	"""
 
-	class __dependencies__:
-		def __init__(self):
-			import sys
-			self.sys = sys
+	# class __dependencies__:
+	# 	def __init__(self):
+	# 		import sys
+	# 		self.sys = sys
 
-			import os
-			self.os = os
+	# 		import os
+	# 		self.os = os
 
-			import threading
-			self.threading = threading
+	# 		import threading
+	# 		self.threading = threading
 
-			import requests
-			self.requests = requests
+	# 		import requests
+	# 		self.requests = requests
 
-			import urllib.parse
-			self.parser = urllib.parse
+	# 		import urllib.parse
+	# 		self.parser = urllib.parse
 
-			import json
-			self.json = json
+	# 		import json
+	# 		self.json = json
 
-			import re
-			self.re = re
+	# 		import re
+	# 		self.re = re
 
-			from zipfile import ZipFile, Path
-			self.zip = ZipFile
-			self.zippath = Path
+	# 		from zipfile import ZipFile, Path
+	# 		self.zip = ZipFile
+	# 		self.zippath = Path
 
-			self.PATH = sys.path
+	# 		self.PATH = sys.path
 
-	__deps__ = __dependencies__()
+	# __deps__ = __dependencies__()
 
 	modules = {}
 
@@ -94,7 +105,7 @@ class employ:
 
 		__self__.__ready__ = False
 		
-		class __sync__(employ.__deps__.threading.Thread):
+		class __sync__(threading.Thread):
 			"""Subclass of `threading.Thread`. Allow both synchronous and asynchronous imports."""
 
 			def run(self, __self__=__self__, __name__=__name__, __params__=__params__):
@@ -111,7 +122,7 @@ class employ:
 				# For remote modules:
 					__source__ = "remote"
 					__url__ = __params__["url"]
-					__join__ = employ.__deps__.parser.urljoin
+					__join__ = parser.urljoin
 					__file__ = __join__(__url__+"/", "__init__.py")
 					if "getoptions" in __params__: __getoptions__ = __params__["getoptions"]
 					else: __getoptions__ = {"allow_redirects": True, "timeout": 30}
@@ -127,7 +138,7 @@ class employ:
 						"""
 
 						try:
-							io = employ.__deps__.requests.get(url, **options)
+							io = requests.get(url, **options)
 							if io.status_code // 100 != 2:
 								raise AssertionError
 							return io
@@ -146,7 +157,7 @@ class employ:
 						"""
 
 						try:
-							io = employ.__deps__.requests.get(url, **options)
+							io = requests.get(url, **options)
 							if io.status_code // 100 == 2: return True
 							else: return False
 						except: raise AssertionError("Module could not be fetched")
@@ -178,12 +189,14 @@ class employ:
 				else:
 				# For local modules:
 					__source__ = "local"
-					if "path" in __params__:
-						employ.__deps__.PATH = [__params__["path"]] # ISSUE: This would most likely update employ.__deps__.PATH generally. Bad!
-					elif "zip" in __params__: # LATER: zip or dir?
-						employ.__deps__.PATH = [None]
+					if "zip" in __params__: # ISSUE: zip or dir?
+						paths = [None]	# ISSUE: Confirm proper naming for 'paths'
+					elif "path" in __params__:
+						paths = [__params__["path"]]
+					else:
+						paths = sys.path
 					
-					for __path__ in employ.__deps__.PATH:
+					for __path__ in paths:
 					# For each path in the module search paths:
 						try:
 							if __path__ and not __path__.endswith(".zip"):
@@ -191,7 +204,7 @@ class employ:
 								if __path__ != "" and not __path__.endswith("/"): __dir__ = __path__+"/"
 								else: __dir__ = __path__
 								
-								if not employ.__deps__.os.path.isdir(__dir__+__name__):
+								if not os.path.isdir(__dir__+__name__):
 									__isdir__ = False
 
 									__filename__ = __name__+".py"
@@ -199,7 +212,7 @@ class employ:
 									
 								else:
 									__isdir__ = True
-									__items__ = employ.__deps__.os.listdir(__dir__+__name__)
+									__items__ = os.listdir(__dir__+__name__)
 									if "__init__.py" in __items__:
 										__items__.remove("__init__.py")
 										__modules__ = {}
@@ -216,7 +229,7 @@ class employ:
 									__dir__ = __params__["dir"] + "/" + __name__
 
 								if not "zip" in __params__:
-									__zip__ = employ.__deps__.zip(__path__)
+									__zip__ = zip(__path__)
 								else:
 									__zip__ = __params__["zip"]
 								
@@ -252,47 +265,49 @@ class employ:
 						except:
 						# # When module is not found in the current path, continue to the next path.
 						# # If no more paths are available, raise `ModuleNotFoundError`.
-						# 	if employ.__deps__.PATH.index(__path__) < len(employ.__deps__.PATH)-1: continue
+						# 	if paths.index(__path__) < len(paths)-1: continue
 						# 	else: raise ModuleNotFoundError("No module named '"+__name__+"'")
 
 							continue
 
-				if "__type__" not in locals():
-					for __path__ in employ.__deps__.PATH:
-					# For each path in the module search paths:
-						try:
-							if __path__ and not __path__.endswith(".zip"):
-							# For regular local modules (that are NOT in a zip file):
-								if __path__ != "" and not __path__.endswith("/"): __dir__ = __path__+"/"
-								else: __dir__ = __path__
-					
-								__isdir__ = False
-				
-								__filename__ = __name__+".json"
-								__io__ = open(__dir__+__filename__)
+					# ISSUE: There was an indentation error concern here. This block was found indented by 1 to the left
 
-							else:
-							# For local modules that are in a zip file:
-								if not "dir" in __params__:
-									__dir__ = __name__
+					if "__type__" not in locals():
+						for __path__ in paths:
+						# For each path in the module search paths:
+							try:
+								if __path__ and not __path__.endswith(".zip"):
+								# For regular local modules (that are NOT in a zip file):
+									if __path__ != "" and not __path__.endswith("/"): __dir__ = __path__+"/"
+									else: __dir__ = __path__
+						
+									__isdir__ = False
+					
+									__filename__ = __name__+".json"
+									__io__ = open(__dir__+__filename__)
+
 								else:
-									__dir__ = __params__["dir"] + "/" + __name__
-					
-								if not "zip" in __params__:
-									__zip__ = employ.__deps__.zip(__path__)
-								else:
-									__zip__ = __params__["zip"]
+								# For local modules that are in a zip file:
+									if not "dir" in __params__:
+										__dir__ = __name__
+									else:
+										__dir__ = __params__["dir"] + "/" + __name__
+						
+									if not "zip" in __params__:
+										__zip__ = zip(__path__)
+									else:
+										__zip__ = __params__["zip"]
 
-								__isdir__ = False
-								__filename__ = __dir__+".json"
-								__io__ = __zip__.open(__filename__)
-					
-							__type__ = "JSON"
-							break
-						except: continue
+									__isdir__ = False
+									__filename__ = __dir__+".json"
+									__io__ = __zip__.open(__filename__)
+						
+								__type__ = "JSON"
+								break
+							except: continue
 
-				if "__type__" not in locals():
-					raise ModuleNotFoundError("No module named '"+__name__+"'")
+					if "__type__" not in locals():
+						raise ModuleNotFoundError("No module named '"+__name__+"'")
 
 				# Allow for custom module name via the `name` parameter.
 				# Useful for avoiding naming conflicts when importing modules with the same file name.
@@ -334,274 +349,7 @@ class employ:
 					exec(__script__, __env__)
 
 				elif __type__ == "JSON":
-					class interpreter:
-						# # Old:
-						# (r'((?<!~)(?:~~)*)\$([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$)')
-						# (r'((?<!~)(?:~~)*)\$`((?:[^`~]|~~|~`)*?)`')
-						
-						# # Update:
-						# (r'(~*)\$([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$)')
-						# (r'(~*)\$`((?:[^`~]|~~|~`)*?)`')
-						
-						# RegEx:
-						(r'(~*)\$(`((?:[^`~]|~~|~`)*?)`|([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|\$|$))')
-						(r'^\$([a-zA-Z_][a-zA-Z0-9_]*)$')
-						(r'^\$`((?:[^`~]|~~|~`)*?)`$')
-
-						(r"(~*)@('((?:[^'~]|~~|~')*?)'|([a-zA-Z_][a-zA-Z0-9_]>*)(?=\s|@|$))")
-
-						pystart = '\$'
-						pygroup = '`'
-						objstart = "@"
-						objgroup = "'"
-						objsub = ">"
-						escape = '\?'
-						escape_ = '?'
-						
-						a = r'('+escape+r'*)' + pystart + r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pystart + r'|$)'
-						b = r'('+escape+r'*)' + pystart+pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup
-
-						pyPatternStringGrouped = pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup
-						pyPatternStringUngrouped = r'([a-zA-Z_][a-zA-Z0-9_]*)(?=\s|' + pystart + r'|'+ escape +r'|$)'
-						pyPatternString = pystart + r'(' + pyPatternStringGrouped + r'|'+ pyPatternStringUngrouped + r')'
-
-						objPatternString = r"@('((?:[^'\?]|\?\?|\?'|\?>)*?)'|([a-zA-Z0-9_>]*)(?=\s|@|$))"
-
-						allPatternString = r'('+escape+r'*)((' + pyPatternString + r')|(' + objPatternString + r'))'
-
-						pyPatternAnyTypeUngrouped = r'^' + pystart + r'([a-zA-Z_][a-zA-Z0-9_]*)$'
-						pyPatternAnyTypeGrouped = r'^' + pystart+pygroup + r'((?:[^'+pygroup+escape+r']|'+escape*2+r'|'+escape+pygroup+r')*?)' + pygroup+r'$'
-
-						objPatternAnyTypeUngrouped = r'^@([a-zA-Z0-9_>]*)$'
-						objPatternAnyTypeGrouped = r"^@'((?:[^'\?]|\?\?|\?'|\?>)*?)'$"
-						objPatternAnyType = r"^@('((?:[^'\?]|\?\?|\?'|\?>)*?)'|([a-zA-Z0-9_>]*))$"
- 
-						@staticmethod
-						def processor(value, key, container):
-							obj = interpreter(value, key, container)
-
-							if isinstance(value, str):
-								obj.process()
-								container[key] = obj.result
-
-							elif isinstance(value, list):
-								container[key] = []
-
-								for i, v in enumerate(value):
-									container[key].append(None)
-									interpreter.processor(v, i, container[key])
-
-							elif isinstance(value, dict):
-								container[key] = {}
-
-								for k, v in value.items():
-									interpreter.processor(v, k, container[key])
-
-							else:
-								container[key] = value
-
-							obj.checkresolved()
-
-						@staticmethod
-						def resolve():
-							i = 0
-							while len(queue):
-								reference = resolved[i]
-								citations = queue[reference]
-
-								for citation in citations:
-									value, key, container = citation.ref[0], citation.ref[1], citation.ref[2]
-									interpreter.processor(value, key, container)
-
-								del queue[reference]
-								i += 1
-
-						@staticmethod
-						class unresolved:
-							pass
-
-						def __init__(s, value, key, container):
-							s.ref = value, key, container
-
-							s.valid = True
-
-						def reset(s):
-							s = interpreter(*s.ref)
-
-						def process(s):
-							value = s.ref[0]
-
-							match = employ.__deps__.re.search(interpreter.pyPatternAnyTypeUngrouped, value)
-							if match:
-								s.pyInterpretATUG(match)
-								return
-
-							match = employ.__deps__.re.search(interpreter.pyPatternAnyTypeGrouped, value)
-							if match:
-								s.pyInterpretATG(match)
-								return
-
-							match = employ.__deps__.re.search(interpreter.objPatternAnyType, value)
-							if match:
-								s.objInterpretAT(match)
-								return
-
-							s.result = employ.__deps__.re.sub(interpreter.allPatternString, s.interprets, value)
-
-						def pyInterpretATUG(s, match):
-							s.code = match.group()
-							s.expression = match.group(1)
-							
-							try:
-								s.result = s.evaluate()
-							except NameError:
-								s.valid = False
-								s.result = s.code
-
-						def pyInterpretATG(s, match):
-							s.code = match.group()
-							s.expression = match.group(1)
-					
-							s.result = s.interpret()
-
-						def objInterpretAT(s, match):
-							s.code = match.group()
-							s.expression = match.group(2) or match.group(3)
-
-							s.result = s.find()
-
-						def interprets(s, match):
-							s.reset()
-
-							s.code = match.group()
-							s.pre = match.group(1)
-
-							if match.group(3):
-								if match.group(5):
-									if len(s.pre) % 2 == 1:
-										s.valid = False
-										return s.code[1:]
-						
-									s.pre = s.pre.replace(s.escape_*2, s.escape_)
-						
-									s.expression = match.group(5)
-
-									return f"{s.pre}{s.interpret()}"
-								else:
-									s.expression = match.group(6)
-									result = s.retrieve()
-						
-									if s.valid:
-										if len(s.pre) % 2 == 1:
-											s.valid = False
-											return s.code[1:]
-						
-										s.pre = s.pre.replace(s.escape_*2, s.escape_)
-						
-										return f"{s.pre}{result}"
-									else:
-										return f"{result}"
-							elif match.group(7):
-								s.expression = match.group(9) or match.group(10)
-								result = s.find()
-
-								if s.valid:
-									if len(s.pre) % 2 == 1:
-										s.valid = False
-										return s.code[1:]
-							
-									s.pre = s.pre.replace(s.escape_*2, s.escape_)
-
-									return f"{s.pre}{result}"
-								else:
-									return f"{result}"
-
-						def interpret(s):
-							s.expression = s.expression.replace(s.escape_+s.pygroup, s.pygroup).replace(s.escape_*2, s.escape_) # ISSUE: Do same for @ references
-
-							return s.evaluate()
-
-						def retrieve(s):
-							try:
-								return s.evaluate()
-							except NameError:
-								s.valid = False
-								return s.code
-
-						def find(s):
-							s.expression = s.expression.replace(s.escape_+s.objgroup, s.objgroup)
-
-							try:
-								result = s.trace(dataobject["data"])
-
-								if not isinstance(result, interpreter.unresolved):
-									return result
-								else:
-									identity = id(s.trace(data))
-									if identity not in queue:
-										queue[identity] = []
-									queue[identity].append(s)
-						
-									return interpreter.unresolved()
-							except (KeyError, IndexError, ValueError):
-								try:
-									identity = id(s.trace(data))
-									if identity not in queue:
-										queue[identity] = []
-									queue[identity].append(s)
-						
-									return interpreter.unresolved()
-								except (KeyError, IndexError, ValueError):
-									s.valid = False
-									return s.code
-
-						def evaluate(s):
-							return eval(s.expression, __global__)
-
-						def trace(s, source):
-							track = s.expression.split(s.objsub)
-
-							key = ""
-
-							for n in range(len(track)):
-								if len(employ.__deps__.re.search(s.escape + r'*$', track[n]).group()) % 2 == 1 and n + 1 < len(track):
-									key += track[n] + s.objsub
-									continue
-
-								key += track[n]
-								key = key.replace(s.escape_+s.objsub, s.objsub).replace(s.escape_*2, s.escape_)
-
-								if isinstance(source, list):
-									key = int(key)
-
-								source = source[key]
-
-								key = ""
-
-							return source
-
-						def checkresolved(s):
-							value, key, container = s.ref[0], s.ref[1], s.ref[2]
-
-							if not isinstance(container[key], interpreter.unresolved):
-								identity = id(value)
-
-								if identity in queue:
-									resolved.append(identity)
-
-					data = employ.__deps__.json.loads(__script__)
-
-					dataobject = {
-						"data": None
-					}
-
-					queue = {}
-					resolved = []
-
-					interpreter.processor(data, "data", dataobject)
-					interpreter.resolve()
-
-					data = dataobject["data"]
+					data = Interpreter(json.loads(__script__), __global__).process()
 
 				if not __isdir__ and "only" in __params__:
 				# Perform selective addition of variables from the new environment to the old environment, based on the `only` parameter.
@@ -634,11 +382,11 @@ class employ:
 								try:
 									if __source__ == "local":
 										if not "__zip__" in locals():
-											__child__ = employ(__item__, path=__dir__+__name__, level="private", univ=__univ__, family=__children__)
+											__child__ = Employ(__item__, path=__dir__+__name__, level="private", univ=__univ__, family=__children__)
 										else:
-											__child__ = employ(__item__, level="private", univ=__univ__, family=__children__, zip=__zip__, dir=__dir__)
+											__child__ = Employ(__item__, level="private", univ=__univ__, family=__children__, zip=__zip__, dir=__dir__)
 									elif __source__ == "remote":
-										__child__ = employ(__item__, url=__join__(__url__+"/", __item__+".py"), level="private", univ=__univ__, family=__children__)
+										__child__ = Employ(__item__, url=__join__(__url__+"/", __item__+".py"), level="private", univ=__univ__, family=__children__)
 
 									__modules__.update({__item__: __child__})
 									__children__.__setattr__(__item__, __child__)
@@ -652,7 +400,7 @@ class employ:
 							if __item__.endswith(".py"): __item__ = __item__[0:__item__.find(".py")]
 							__childdict__[__item__] = None
 
-						class __createchild__(employ.__deps__.threading.Thread):
+						class __createchild__(threading.Thread):
 							"""Subclass of `threading.Thread`. Allow asynchronous import of child modules."""
 
 							def __init__(self, item):
@@ -663,15 +411,15 @@ class employ:
 									Name of child module.
 								"""
 
-								employ.__deps__.threading.Thread.__init__(self)
+								threading.Thread.__init__(self)
 								self.item = item
 							def run(self):
 								"""Overrides the `threading.Thread`'s `run()` method. Imports child module, and stores in `__childdict__`."""
 
 								# Quietly import child module, and store in `__childdict__` dictionary.
 								try:
-									if __source__ == "local": __childdict__[self.item] = employ(self.item, path=__dir__+__name__, level="private", univ=__univ__, family=__children__)
-									elif __source__ == "remote": __childdict__[self.item] = employ(self.item, url=__join__(__url__+"/", self.item+".py"), level="private", univ=__univ__, family=__children__)
+									if __source__ == "local": __childdict__[self.item] = Employ(self.item, path=__dir__+__name__, level="private", univ=__univ__, family=__children__)
+									elif __source__ == "remote": __childdict__[self.item] = Employ(self.item, url=__join__(__url__+"/", self.item+".py"), level="private", univ=__univ__, family=__children__)
 								except: del __childdict__[self.item]
 
 						# Start asynchronous import of child modules, and wait for all child modules to be imported before proceeding.
@@ -730,7 +478,7 @@ class employ:
 				# if module is imported as a public module.
 				if "level" not in __params__ or __params__["level"] != "private":
 					__self__.modules.update({__name__:__self__})
-					employ.__deps__.sys.modules.update({__name__:__self__})
+					sys.modules.update({__name__:__self__})
 
 				# Clear `employ` object attributes to avoid namespace pollution and potential conflicts with imported module's attributes.
 				__self__.__setattr__("modules",{})
