@@ -207,12 +207,7 @@ class Script:
             skip = value[s.parsed:match.start()]
             s.parts.append(skip)
 
-            result = s.interpretS(match) ###
-
-            # container = s.ref[2]
-            # script = Script(match.group(), "key", container, s.i) # ISSUE: change key later
-            # script.process()
-            # result = f"{script.result}" # ISSUE: Verify what types this returns
+            result = s.interpretS(match)
 
             if not isinstance(result, s.i.unresolved):
                 s.parts.append(result)
@@ -327,10 +322,6 @@ class Script:
                 if identity not in s.awaiting:
                     s.awaiting[identity] = []
                 s.awaiting[identity].append(None)
-                # identity = id(s.trace(s.i.data))
-                # if identity not in s.i.queue:
-                #     s.i.queue[identity] = []
-                # s.i.queue[identity].append(s) # ISSUE: Prevent multiple appends per listener
 
                 return s.i.unresolved(s) # ISSUE: Do we need to re-create a new unreolved here, or use result's?
         except (KeyError, IndexError, ValueError):
@@ -339,11 +330,7 @@ class Script:
                 if identity not in s.awaiting:
                     s.awaiting[identity] = []
                 s.awaiting[identity].append(None)
-                # identity = id(s.trace(s.i.data))
-                # if identity not in s.i.queue:
-                #     s.i.queue[identity] = []
-                # s.i.queue[identity].append(s)
-    
+
                 return s.i.unresolved(s)
             except (KeyError, IndexError, ValueError):
                 s.valid = False
@@ -378,7 +365,7 @@ class Script:
         for identity in s.awaiting.keys():
             if identity not in s.i.queue:
                 s.i.queue[identity] = []
-            s.i.queue[identity].append(s)
+            s.i.queue[identity].append(s) # ISSUE: Prevent multiple appends per listener
 
     def announceresolved(s):
         value, key, container = s.ref[0], s.ref[1], s.ref[2]
