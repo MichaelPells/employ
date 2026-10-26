@@ -154,14 +154,16 @@ class Script:
         if s.match: # ISSUE: Check how match (Match object) could be None.
             s.route(s.match, s.form)
         else:
+            print(s.awaiting, reference)
             targets = s.awaiting[reference]
 
             for n in targets:
-                match = s.parts[n]
-                result = s.interpretS(match)
+                if isinstance(n, int):
+                    match = s.parts[n]
+                    result = s.interpretS(match)
 
-                if not isinstance(result, s.i.unresolved):
-                    s.parts[n] = result
+                    if not isinstance(result, s.i.unresolved):
+                        s.parts[n] = result
 
             del s.awaiting[reference]
             s.reset()
@@ -202,7 +204,6 @@ class Script:
         value = s.ref[0]
 
         for match in re.finditer(s.i.allPatternString, value):
-            print(match)
             skip = value[s.parsed:match.start()]
             s.parts.append(skip)
 
@@ -222,7 +223,6 @@ class Script:
                     identities = [id(result.script.trace(s.i.data))]
                 else:
                     identities = list(result.script.awaiting.keys())
-                    print(match, identities)
 
                 for identity in identities:
                     if identity not in s.awaiting:
