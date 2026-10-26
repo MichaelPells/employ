@@ -169,7 +169,7 @@ class Script:
             s.reset()
 
             if not s.awaiting:
-                s.result = "".join(s.parts) # ISSUE: Does s.interpretS return strictly string?
+                s.result = "".join(s.parts)
 
     def route(s, match, form):
         s.form = form
@@ -292,13 +292,13 @@ class Script:
         s.expression = s.expression.replace(s.i.escape_+s.i.pygroup, s.i.pygroup)
 
         container = s.ref[2]
-        script = Script(s.expression, None, container, s.i) # ISSUE: change key later
+        script = Script(s.expression, None, container, s.i)
         script.process()
 
         if isinstance(script.result, s.i.unresolved):
             return script.result
 
-        s.expression = script.result # ISSUE: Verify what types this returns
+        s.expression = script.result # ISSUE: Verify what types this returns: unresolved (caught), string (good), & Any (concern)
 
         return s.evaluate()
 
