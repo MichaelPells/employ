@@ -292,7 +292,7 @@ class Script:
         s.expression = s.expression.replace(s.i.escape_+s.i.pygroup, s.i.pygroup)
 
         container = s.ref[2]
-        script = Script(s.expression, "key", container, s.i) # ISSUE: change key later
+        script = Script(s.expression, None, container, s.i) # ISSUE: change key later
         script.process()
 
         if isinstance(script.result, s.i.unresolved):
