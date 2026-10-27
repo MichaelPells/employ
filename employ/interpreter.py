@@ -92,7 +92,6 @@ class Interpreter:
                 container[key] = value
         else:
             script.resume(reference)
-            script.queue()
             container[key] = script.result
 
         script.announceresolved()
@@ -154,7 +153,7 @@ class Script:
         if s.match: # ISSUE: Check how match (Match object) could be None.
             s.route(s.match, s.form)
         else:
-            print(s.awaiting, reference)
+            # print(s.awaiting, reference)
             targets = s.awaiting[reference]
 
             for n in targets:
@@ -365,7 +364,7 @@ class Script:
         for identity in s.awaiting.keys():
             if identity not in s.i.queue:
                 s.i.queue[identity] = []
-            s.i.queue[identity].append(s) # ISSUE: Prevent multiple appends per listener
+            s.i.queue[identity].append(s)
 
     def announceresolved(s):
         value, key, container = s.ref[0], s.ref[1], s.ref[2]
@@ -375,3 +374,5 @@ class Script:
 
             if identity in s.i.queue:
                 s.i.resolved.append(identity)
+
+# ISSUE: Issue with substitution and eval() when @ points to a non-string (e.g dict or int)
