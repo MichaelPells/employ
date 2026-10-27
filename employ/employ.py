@@ -4,8 +4,7 @@ import threading
 import requests
 import urllib.parse as parser
 import json
-import re
-from zipfile import ZipFile, Path
+from zipfile import ZipFile as zip, Path as zippath
 
 from .interpreter import Interpreter
 
